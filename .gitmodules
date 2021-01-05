@@ -1,0 +1,3 @@
+[submodule "WebRTSP"]
+	path = WebRTSP
+	url = https://github.com/WebRTSP/Native.git

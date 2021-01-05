@@ -1,0 +1,102 @@
+name: rtsp-to-webrtsp
+#base: core20
+base: core18
+summary: Media URLs ReStreamer (over WebRTC)
+adopt-info: restreamer
+description: |
+  Intended to help play RTSP streams from IP Cams (and some other URL types) in browsers
+license: GPL-3.0
+grade: devel
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: i386
+  - build-on: armhf
+
+environment:
+  GST_DEBUG: 3
+  GST_DEBUG_NO_COLOR: 1
+  GST_PLUGIN_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0
+  GST_PLUGIN_SYSTEM_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0
+  GST_PLUGIN_SCANNER: $SNAP/usr/libexec/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0/gst-plugin-scanner
+  LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib
+
+layout:
+  /opt/rtsp-to-webrtsp/lib:
+    symlink: $SNAP/opt/rtsp-to-webrtsp/lib
+
+parts:
+  lws:
+    plugin: cmake
+    source-type: git
+    source: https://github.com/warmcat/libwebsockets.git
+    source-branch: v4.1-stable
+#    cmake-parameters:
+    configflags:
+      - -DLWS_WITHOUT_TESTAPPS=ON
+      - -DLWS_WITH_GLIB=ON
+      - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
+    build-packages:
+      - libssl-dev
+    stage-packages:
+      - libssl1.1
+  nice:
+    plugin: meson
+    source-type: git
+    source: https://github.com/libnice/libnice.git
+    source-branch: latest-release
+    meson-parameters:
+      - --prefix=/opt/${SNAPCRAFT_PROJECT_NAME}
+    build-packages:
+      - pkg-config
+      - libglib2.0-dev
+      - gtk-doc-tools
+  www:
+    source: https://github.com/WebRTSP/BrowserClient.git
+    plugin: dump
+    organize:
+      'css/*.css': www/css/
+      '*.mjs': www/
+      '*.js': www/
+      '*.html': www/
+  restreamer:
+    plugin: cmake
+    source-type: git
+    source: https://github.com/WebRTSP/ReStreamer.git
+    build-environment:
+      - PKG_CONFIG_PATH: $SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:$PKG_CONFIG_PATH
+    override-pull: |
+        snapcraftctl pull
+        snapcraftctl set-version "$(git describe --always)"
+    after:
+      - lws
+      - nice
+      - www
+    build-packages:
+      - g++
+      - make
+      - libspdlog-dev
+      - libconfig-dev
+      - libgstreamer1.0-dev
+      - libgstreamer-plugins-bad1.0-dev
+    stage-packages:
+      - libconfig9
+      - libslang2
+      - libgpm2
+      - libpulse0
+#      - libx264-155
+      - libx264-152
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-nice
+
+apps:
+  ReStreamer:
+#    command: usr/local/bin/ReStreamer
+    command: ReStreamer
+    daemon: simple
+    plugs:
+      - network-bind
+      - network
