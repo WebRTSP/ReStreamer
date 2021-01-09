@@ -19,7 +19,8 @@ struct StreamerConfig
 
 struct Config : public signalling::Config
 {
-    spdlog::level::level_enum logLevel = spdlog::level::warn;
+    spdlog::level::level_enum logLevel = spdlog::level::info;
+    spdlog::level::level_enum lwsLogLevel = spdlog::level::warn;
 
     bool allowClientUrls = true;
 

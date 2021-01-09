@@ -19,5 +19,6 @@ streamers: (
 )
 
 debug: {
-#    log-level: 3
+#  log-level: 3
+#  lws-log-level: 2
 }

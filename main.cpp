@@ -97,6 +97,14 @@ static bool LoadConfig(Config* config)
                             spdlog::level::critical - std::min<int>(logLevel, spdlog::level::critical));
                 }
             }
+            int lwsLogLevel = 0;
+            if(CONFIG_TRUE == config_setting_lookup_int(debugConfig, "lws-log-level", &lwsLogLevel)) {
+                if(lwsLogLevel > 0) {
+                    loadedConfig.lwsLogLevel =
+                        static_cast<spdlog::level::level_enum>(
+                            spdlog::level::critical - std::min<int>(lwsLogLevel, spdlog::level::critical));
+                }
+            }
         }
 
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
@@ -181,8 +189,8 @@ int main(int argc, char *argv[])
     if(!LoadConfig(&config))
         return -1;
 
+    InitLwsLogger(config.lwsLogLevel);
     InitHttpServerLogger(config.logLevel);
-    InitLwsLogger(config.logLevel);
     InitWsServerLogger(config.logLevel);
     InitReStreamerLogger(config.logLevel);
 
