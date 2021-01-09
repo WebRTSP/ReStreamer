@@ -60,6 +60,10 @@ static bool LoadConfig(Config* config)
         if(CONFIG_TRUE == config_lookup_int(&config, "port", &port)) {
             loadedConfig.port = static_cast<unsigned short>(port);
         }
+        int loopbackOnly = false;
+        if(CONFIG_TRUE == config_lookup_bool(&config, "loopback-only", &loopbackOnly)) {
+            loadedConfig.bindToLoopbackOnly = loopbackOnly != false;
+        }
         int securePort= 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "secure-port", &port)) {
             loadedConfig.securePort = static_cast<unsigned short>(securePort);

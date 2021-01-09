@@ -1,4 +1,6 @@
 port: 5554
+#loopback-only: false
+
 allow-client-urls: false
 
 streamers: (
