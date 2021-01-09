@@ -77,7 +77,7 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
     LwsContextPtr lwsContextPtr(lws_create_context(&lwsInfo));
     lws_context* lwsContext = lwsContextPtr.get();
 
-    http::Server httpServer(httpConfig, loop);
+    http::Server httpServer(httpConfig, config.port, loop);
     signalling::WsServer server(
         config,
         loop,
