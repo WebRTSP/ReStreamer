@@ -192,6 +192,7 @@ int main(int argc, char *argv[])
     InitLwsLogger(config.lwsLogLevel);
     InitHttpServerLogger(config.logLevel);
     InitWsServerLogger(config.logLevel);
+    InitServerSessionLogger(config.logLevel);
     InitReStreamerLogger(config.logLevel);
 
     LibGst libGst;
