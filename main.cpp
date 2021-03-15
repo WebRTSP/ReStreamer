@@ -13,7 +13,7 @@
 #include "Http/Log.h"
 #include "Http/Config.h"
 
-#include "GstStreaming/LibGst.h"
+#include "RtcStreaming/GstRtcStreaming/LibGst.h"
 
 #include "Signalling/Log.h"
 
