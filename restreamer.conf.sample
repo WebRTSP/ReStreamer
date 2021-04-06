@@ -13,9 +13,7 @@ streamers: (
   {name: "Norwich",            url: "rtsp://37.157.51.30/axis-media/media.amp",               description: "rtsp://37.157.51.30/axis-media/media.amp"},
   {name: "Montana",            url: "rtsp://64.187.201.16/axis-media/media.amp",              description: "rtsp://64.187.201.16/axis-media/media.amp"},
   {name: "Western Cape",       url: "rtsp://196.21.92.82/axis-media/media.amp",               description: "rtsp://196.21.92.82/axis-media/media.amp"},
-  {name: "Nordland",           url: "rtsp://77.110.228.219/axis-media/media.amp",             description: "rtsp://77.110.228.219/axis-media/media.amp"},
-  {name: "Wroclaw",            url: "rtsp://78.10.34.92/axis-media/media.amp",                description: "rtsp://78.10.34.92/axis-media/media.amp"},
-  {name: "Kiev",               url: "rtsp://77.52.149.60/axis-media/media.amp",               description: "rtsp://77.52.149.60/axis-media/media.amp"}
+  {name: "Nordland",           url: "rtsp://77.110.228.219/axis-media/media.amp",             description: "rtsp://77.110.228.219/axis-media/media.amp"}
 )
 
 debug: {
