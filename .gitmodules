@@ -1,3 +1,6 @@
 [submodule "WebRTSP"]
 	path = WebRTSP
 	url = https://github.com/WebRTSP/Native.git
+[submodule "www"]
+	path = www
+	url = https://github.com/WebRTSP/BrowserClient.git
