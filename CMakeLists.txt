@@ -42,4 +42,11 @@ target_link_libraries(${PROJECT_NAME}
 if(SNAPCRAFT_BUILD)
     install(TARGETS ${PROJECT_NAME} DESTINATION bin)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/restreamer.conf.sample DESTINATION etc)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/www
+        DESTINATION /opt/$ENV{SNAPCRAFT_PROJECT_NAME}
+        FILES_MATCHING
+        PATTERN "www/css/*.css"
+        PATTERN "www/*.mjs"
+        PATTERN "www/*.js"
+        PATTERN "www/*.html")
 endif()

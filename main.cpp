@@ -181,8 +181,10 @@ int main(int argc, char *argv[])
     http::Config httpConfig {};
     httpConfig.bindToLoopbackOnly = false;
 #ifdef SNAPCRAFT_BUILD
-    if(const gchar* snapPath = g_getenv("SNAP"))
-        httpConfig.wwwRoot = std::string(snapPath) + "/www";
+    const gchar* snapPath = g_getenv("SNAP");
+    const gchar* snapName = g_getenv("SNAP_NAME");
+    if(snapPath && snapName)
+        httpConfig.wwwRoot = std::string(snapPath) + "/opt/" + snapName + "/www";
 #endif
     Config config {};
     config.bindToLoopbackOnly = false;

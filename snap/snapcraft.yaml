@@ -53,14 +53,6 @@ parts:
       - pkg-config
       - libglib2.0-dev
       - gtk-doc-tools
-  www:
-    source: https://github.com/WebRTSP/BrowserClient.git
-    plugin: dump
-    organize:
-      'css/*.css': www/css/
-      '*.mjs': www/
-      '*.js': www/
-      '*.html': www/
   restreamer:
     plugin: cmake
     source-type: git
@@ -73,7 +65,6 @@ parts:
     after:
       - lws
       - nice
-      - www
     build-packages:
       - g++
       - make
