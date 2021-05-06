@@ -7,8 +7,8 @@
 
 #include "Signalling/WsServer.h"
 
-#include "RtcStreaming/GstRtcStreaming/GstTestStreamer.h"
-#include "RtcStreaming/GstRtcStreaming/GstReStreamer.h"
+#include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
+#include "RtStreaming/GstRtStreaming/GstReStreamer.h"
 
 #include "Log.h"
 #include "Session.h"

@@ -28,7 +28,6 @@ file(GLOB_RECURSE SNAP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 add_executable(${PROJECT_NAME} ${SOURCES} ${SNAP})
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/WebRTSP
-    ${CMAKE_CURRENT_SOURCE_DIR}/WebRTSP/RtcStreaming/deps
     ${LIBCONFIG_INCLUDE_DIRS}
     ${SPDLOG_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
@@ -37,7 +36,7 @@ target_link_libraries(${PROJECT_NAME}
     Http
     RtspParser
     Signalling
-    RtcStreaming)
+    RtStreaming)
 
 if(SNAPCRAFT_BUILD)
     install(TARGETS ${PROJECT_NAME} DESTINATION bin)
