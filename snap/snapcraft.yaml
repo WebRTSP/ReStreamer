@@ -1,6 +1,5 @@
 name: rtsp-to-webrtsp
-#base: core20
-base: core18
+base: core20
 summary: Media URLs ReStreamer (over WebRTC)
 adopt-info: restreamer
 description: |
@@ -33,8 +32,7 @@ parts:
     source-type: git
     source: https://github.com/warmcat/libwebsockets.git
     source-branch: v4.1-stable
-#    cmake-parameters:
-    configflags:
+    cmake-parameters:
       - -DLWS_WITHOUT_TESTAPPS=ON
       - -DLWS_WITH_GLIB=ON
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
@@ -53,12 +51,16 @@ parts:
       - pkg-config
       - libglib2.0-dev
       - gtk-doc-tools
+    stage-packages:
+      - libgstreamer1.0-0
   restreamer:
     plugin: cmake
     source-type: git
     source: https://github.com/WebRTSP/ReStreamer.git
     build-environment:
       - PKG_CONFIG_PATH: $SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:$PKG_CONFIG_PATH
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
     override-pull: |
         snapcraftctl pull
         snapcraftctl set-version "$(git describe --always)"
@@ -77,8 +79,7 @@ parts:
       - libslang2
       - libgpm2
       - libpulse0
-#      - libx264-155
-      - libx264-152
+      - libx264-155
       - gstreamer1.0-plugins-good
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
@@ -86,8 +87,7 @@ parts:
 
 apps:
   ReStreamer:
-#    command: usr/local/bin/ReStreamer
-    command: ReStreamer
+    command: opt/${SNAPCRAFT_PROJECT_NAME}/bin/ReStreamer
     daemon: simple
     plugs:
       - network-bind
