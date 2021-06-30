@@ -46,12 +46,21 @@ static std::unique_ptr<rtsp::ServerSession> CreateSession(
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
-    return
+    std::unique_ptr<Session> session =
         std::make_unique<Session>(
             config,
             cache,
             std::bind(CreatePeer, config, std::placeholders::_1),
             sendRequest, sendResponse);
+
+    WebRTCPeer::IceServers iceServers;
+    if(!config->stunServer.empty())
+        iceServers.push_back(config->stunServer);
+
+    if(!iceServers.empty())
+        session->setIceServers(iceServers);
+
+    return session;
 }
 
 int ReStreamerMain(const http::Config& httpConfig, const Config& config)
