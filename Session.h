@@ -25,17 +25,7 @@ protected:
     bool onListRequest(
         std::unique_ptr<rtsp::Request>&) noexcept override;
 
-    bool onGetParameterResponse(
-        const rtsp::Request&,
-        const rtsp::Response&) noexcept override;
-    bool onSetParameterResponse(
-        const rtsp::Request&,
-        const rtsp::Response&) noexcept override;
-
 private:
     const Config *const _config;
     Cache *const _cache;
-
-    rtsp::CSeq _authCSeq = 0;
-    rtsp::CSeq _iceServerCSeq = 0;
 };
