@@ -80,6 +80,7 @@ static bool LoadConfig(Config* config)
         if(CONFIG_TRUE == config_lookup_bool(&config, "allow-client-urls", &allowClientUrls)) {
             loadedConfig.allowClientUrls = allowClientUrls != false;
         }
+
         config_setting_t* stunServerConfig = config_lookup(&config, "stun");
         if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
             const char* server = nullptr;
@@ -87,6 +88,7 @@ static bool LoadConfig(Config* config)
                 loadedConfig.stunServer = server;
             }
         }
+
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
             int logLevel = 0;
@@ -167,6 +169,13 @@ static bool LoadConfig(Config* config)
 
     if(!loadedConfig.port) {
         Log()->error("Missing port");
+        success = false;
+    }
+
+    if(!loadedConfig.stunServer.empty() &&
+       g_ascii_strncasecmp(loadedConfig.stunServer.c_str(), "stun://", 7) != 0)
+    {
+        Log()->error("Stun server should start with \"stun://\"");
         success = false;
     }
 
