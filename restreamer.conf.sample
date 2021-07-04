@@ -16,6 +16,10 @@ streamers: (
   {name: "Nordland",           url: "rtsp://77.110.228.219/axis-media/media.amp",             description: "rtsp://77.110.228.219/axis-media/media.amp"}
 )
 
+stun: {
+  server: "stun://stun.ipcam.stream:3478"
+}
+
 debug: {
 #  log-level: 3
 #  lws-log-level: 2
