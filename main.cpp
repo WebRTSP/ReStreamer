@@ -7,8 +7,8 @@
 #include <CxxPtr/CPtr.h>
 #include "CxxPtr/libconfigDestroy.h"
 
-#include "Common/ConfigHelpers.h"
-#include "Common/LwsLog.h"
+#include "Helpers/ConfigHelpers.h"
+#include "Helpers/LwsLog.h"
 
 #include "Http/Log.h"
 #include "Http/Config.h"
