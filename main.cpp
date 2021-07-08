@@ -189,6 +189,13 @@ static bool LoadConfig(Config* config)
         success = false;
     }
 
+    if(!loadedConfig.turnServer.empty() &&
+       g_ascii_strncasecmp(loadedConfig.turnServer.c_str(), "turn://", 7) != 0)
+    {
+        Log()->error("TURN server URL should start with \"turn://\"");
+        success = false;
+    }
+
     if(success)
         *config = loadedConfig;
 
