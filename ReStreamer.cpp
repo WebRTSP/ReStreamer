@@ -87,7 +87,15 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
     LwsContextPtr lwsContextPtr(lws_create_context(&lwsInfo));
     lws_context* lwsContext = lwsContextPtr.get();
 
-    http::Server httpServer(httpConfig, config.port, loop);
+    std::string configJs =
+        fmt::format("const WebRTSPPort = {};\r\n", config.port);
+    if(!config.stunServer.empty()) {
+        std::string stunServer = config.stunServer;
+        stunServer.erase(5, 2); // "stun://..." -> "stun:..."
+        configJs += fmt::format("const STUNServer = \"{}\";\r\n", stunServer);
+    }
+
+    http::Server httpServer(httpConfig, configJs, loop);
     signalling::WsServer server(
         config,
         loop,
