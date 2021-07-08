@@ -185,7 +185,7 @@ static bool LoadConfig(Config* config)
     if(!loadedConfig.stunServer.empty() &&
        g_ascii_strncasecmp(loadedConfig.stunServer.c_str(), "stun://", 7) != 0)
     {
-        Log()->error("Stun server should start with \"stun://\"");
+        Log()->error("STUN server URL should start with \"stun://\"");
         success = false;
     }
 
