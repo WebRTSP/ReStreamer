@@ -19,6 +19,7 @@ streamers: (
 stun: {
   server: "stun://stun.ipcam.stream:3478"
 }
+#turn-server: "turn://username:password@host:port"
 
 debug: {
 #  log-level: 3

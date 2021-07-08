@@ -25,6 +25,7 @@ struct Config : public signalling::Config
     bool allowClientUrls = true;
 
     std::string stunServer;
+    std::string turnServer;
 
     std::map<std::string, StreamerConfig> streamers;
 };

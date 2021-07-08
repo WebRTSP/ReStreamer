@@ -56,7 +56,8 @@ static std::unique_ptr<rtsp::ServerSession> CreateSession(
     WebRTCPeer::IceServers iceServers;
     if(!config->stunServer.empty())
         iceServers.push_back(config->stunServer);
-
+    if(!config->turnServer.empty())
+        iceServers.push_back(config->turnServer);
     if(!iceServers.empty())
         session->setIceServers(iceServers);
 

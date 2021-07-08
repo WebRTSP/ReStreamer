@@ -89,6 +89,11 @@ static bool LoadConfig(Config* config)
             }
         }
 
+        const char* turnServer = nullptr;
+        if(CONFIG_TRUE == config_lookup_string(&config, "turn-server", &turnServer)) {
+            loadedConfig.turnServer = turnServer;
+        }
+
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
             int logLevel = 0;
