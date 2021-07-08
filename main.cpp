@@ -89,6 +89,11 @@ static bool LoadConfig(Config* config)
             }
         }
 
+        const char* stunServer = nullptr;
+        if(CONFIG_TRUE == config_lookup_string(&config, "stun-server", &stunServer)) {
+            loadedConfig.stunServer = stunServer;
+        }
+
         const char* turnServer = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "turn-server", &turnServer)) {
             loadedConfig.turnServer = turnServer;

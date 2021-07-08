@@ -16,9 +16,7 @@ streamers: (
   {name: "Nordland",           url: "rtsp://77.110.228.219/axis-media/media.amp",             description: "rtsp://77.110.228.219/axis-media/media.amp"}
 )
 
-stun: {
-  server: "stun://stun.ipcam.stream:3478"
-}
+stun-server: "stun://stun.ipcam.stream:3478"
 #turn-server: "turn://username:password@host:port"
 
 debug: {
