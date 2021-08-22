@@ -56,17 +56,28 @@ static bool LoadConfig(Config* config)
         if(CONFIG_TRUE == config_lookup_string(&config, "host", &host)) {
             loadedConfig.serverName = host;
         }
-        int port= 0;
-        if(CONFIG_TRUE == config_lookup_int(&config, "port", &port)) {
-            loadedConfig.port = static_cast<unsigned short>(port);
+
+        int wsPort= 0;
+        if(CONFIG_TRUE == config_lookup_int(&config, "port", &wsPort)) { // for backward compatibility
+            loadedConfig.port = static_cast<unsigned short>(wsPort);
         }
+        if(CONFIG_TRUE == config_lookup_int(&config, "ws-port", &wsPort)) {
+            loadedConfig.port = static_cast<unsigned short>(wsPort);
+        }
+
         int loopbackOnly = false;
         if(CONFIG_TRUE == config_lookup_bool(&config, "loopback-only", &loopbackOnly)) {
             loadedConfig.bindToLoopbackOnly = loopbackOnly != false;
         }
-        int securePort= 0;
-        if(CONFIG_TRUE == config_lookup_int(&config, "secure-port", &port)) {
-            loadedConfig.securePort = static_cast<unsigned short>(securePort);
+
+        int wssPort= 0;
+        if(CONFIG_TRUE == config_lookup_int(&config, "secure-port", &wssPort)) { // for backward compatibility
+            loadedConfig.securePort = static_cast<unsigned short>(wssPort);
+        }
+        if(CONFIG_TRUE == config_lookup_int(&config, "wss-port", &wssPort)) {
+            loadedConfig.securePort = static_cast<unsigned short>(wssPort);
+        }
+
         }
         const char* certificate = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "certificate", &certificate)) {

@@ -1,4 +1,6 @@
-port: 5554
+ws-port: 5554
+#wss-port: 5555
+
 #loopback-only: false
 
 allow-client-urls: false
