@@ -95,7 +95,11 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
         configJs += fmt::format("const STUNServer = \"{}\";\r\n", stunServer);
     }
 
-    http::Server httpServer(httpConfig, configJs, loop);
+    std::unique_ptr<http::Server> httpServerPtr;
+    if(httpConfig.port || (httpConfig.securePort && !httpConfig.certificate.empty() && !httpConfig.key.empty())) {
+        httpServerPtr = std::make_unique<http::Server>(httpConfig, configJs, loop);
+    }
+
     signalling::WsServer server(
         config,
         loop,
@@ -106,7 +110,7 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
             std::placeholders::_1,
             std::placeholders::_2));
 
-    if(httpServer.init(lwsContext) && server.init(lwsContext))
+    if((!httpServerPtr || httpServerPtr->init(lwsContext)) && server.init(lwsContext))
         g_main_loop_run(loop);
     else
         return -1;
