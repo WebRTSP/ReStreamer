@@ -59,11 +59,12 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
         }
 
         int wsPort= 0;
-        if(CONFIG_TRUE == config_lookup_int(&config, "port", &wsPort)) { // for backward compatibility
-            loadedConfig.port = static_cast<unsigned short>(wsPort);
-        }
         if(CONFIG_TRUE == config_lookup_int(&config, "ws-port", &wsPort)) {
             loadedConfig.port = static_cast<unsigned short>(wsPort);
+        } else if(CONFIG_TRUE == config_lookup_int(&config, "port", &wsPort)) { // for backward compatibility
+            loadedConfig.port = static_cast<unsigned short>(wsPort);
+        } else {
+            loadedConfig.port = 0;
         }
 
         int loopbackOnly = false;
@@ -73,20 +74,25 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
         }
 
         int wssPort= 0;
-        if(CONFIG_TRUE == config_lookup_int(&config, "secure-port", &wssPort)) { // for backward compatibility
-            loadedConfig.securePort = static_cast<unsigned short>(wssPort);
-        }
         if(CONFIG_TRUE == config_lookup_int(&config, "wss-port", &wssPort)) {
             loadedConfig.securePort = static_cast<unsigned short>(wssPort);
+        } else if(CONFIG_TRUE == config_lookup_int(&config, "secure-port", &wssPort)) { // for backward compatibility
+            loadedConfig.securePort = static_cast<unsigned short>(wssPort);
+        } else {
+            loadedConfig.securePort = 0;
         }
 
         int httpPort = 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "http-port", &httpPort)) {
             loadedHttpConfig.port = static_cast<unsigned short>(httpPort);
+        } else {
+            loadedHttpConfig.port = 0;
         }
         int httpsPort = 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "https-port", &httpsPort)) {
             loadedHttpConfig.securePort = static_cast<unsigned short>(httpsPort);
+        } else {
+            loadedHttpConfig.securePort = 0;
         }
 
         const char* certificate = nullptr;
@@ -201,14 +207,15 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
 
     bool success = true;
 
-    if(!loadedConfig.port) {
-        Log()->error("Missing WS port");
+    if(!loadedConfig.port && !loadedConfig.securePort) {
+        Log()->error("At least \"ws-port\" or \"wss-port\" config value should be specified");
         success = false;
     }
 
-    if(!loadedHttpConfig.port) {
-        Log()->error("Missing HTTP port");
-        success = false;
+    if(loadedHttpConfig.securePort && (loadedHttpConfig.certificate.empty() || loadedHttpConfig.key.empty())) {
+        Log()->error("HTTPS acces requires \"certificate\" and \"key\" config keys to be specified.");
+    } else if(loadedConfig.securePort && (loadedConfig.certificate.empty() || loadedConfig.key.empty())) {
+        Log()->error("WSS acces requires \"certificate\" and \"key\" config keys to be specified.");
     }
 
     if(!loadedConfig.stunServer.empty() &&
