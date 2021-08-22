@@ -1,8 +1,10 @@
 ws-port: 5554
-#wss-port: 5555
-
 http-port: 5080
+
+#wss-port: 5555
 #https-port: 5443
+#certificate: "path/to/certificate"
+#key: "path/to/private/key"
 
 #loopback-only: false
 
