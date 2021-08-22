@@ -24,12 +24,13 @@
 static const auto Log = ReStreamerLog;
 
 
-static bool LoadConfig(Config* config)
+static bool LoadConfig(http::Config* httpConfig, Config* config)
 {
     const std::deque<std::string> configDirs = ::ConfigDirs();
     if(configDirs.empty())
         return false;
 
+    http::Config loadedHttpConfig = *httpConfig;
     Config loadedConfig = *config;
 
     for(const std::string& configDir: configDirs) {
@@ -67,6 +68,7 @@ static bool LoadConfig(Config* config)
 
         int loopbackOnly = false;
         if(CONFIG_TRUE == config_lookup_bool(&config, "loopback-only", &loopbackOnly)) {
+            loadedHttpConfig.bindToLoopbackOnly = loopbackOnly != false;
             loadedConfig.bindToLoopbackOnly = loopbackOnly != false;
         }
 
@@ -78,15 +80,26 @@ static bool LoadConfig(Config* config)
             loadedConfig.securePort = static_cast<unsigned short>(wssPort);
         }
 
+        int httpPort = 0;
+        if(CONFIG_TRUE == config_lookup_int(&config, "http-port", &httpPort)) {
+            loadedHttpConfig.port = static_cast<unsigned short>(httpPort);
         }
+        int httpsPort = 0;
+        if(CONFIG_TRUE == config_lookup_int(&config, "https-port", &httpsPort)) {
+            loadedHttpConfig.securePort = static_cast<unsigned short>(httpsPort);
+        }
+
         const char* certificate = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "certificate", &certificate)) {
-            loadedConfig.certificate = FullPath(configDir, certificate);
+            loadedHttpConfig.certificate = FullPath(configDir, certificate);
+            loadedConfig.certificate = loadedHttpConfig.certificate;
         }
         const char* privateKey = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "key", &privateKey)) {
-            loadedConfig.key = FullPath(configDir, privateKey);
+            loadedHttpConfig.key = FullPath(configDir, privateKey);
+            loadedConfig.key = loadedHttpConfig.key;
         }
+
         int allowClientUrls = false;
         if(CONFIG_TRUE == config_lookup_bool(&config, "allow-client-urls", &allowClientUrls)) {
             loadedConfig.allowClientUrls = allowClientUrls != false;
@@ -189,7 +202,12 @@ static bool LoadConfig(Config* config)
     bool success = true;
 
     if(!loadedConfig.port) {
-        Log()->error("Missing port");
+        Log()->error("Missing WS port");
+        success = false;
+    }
+
+    if(!loadedHttpConfig.port) {
+        Log()->error("Missing HTTP port");
         success = false;
     }
 
@@ -207,8 +225,10 @@ static bool LoadConfig(Config* config)
         success = false;
     }
 
-    if(success)
+    if(success) {
+        *httpConfig = loadedHttpConfig;
         *config = loadedConfig;
+    }
 
     return success;
 }
@@ -225,7 +245,7 @@ int main(int argc, char *argv[])
 #endif
     Config config {};
     config.bindToLoopbackOnly = false;
-    if(!LoadConfig(&config))
+    if(!LoadConfig(&httpConfig, &config))
         return -1;
 
     InitLwsLogger(config.lwsLogLevel);

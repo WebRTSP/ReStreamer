@@ -1,6 +1,9 @@
 ws-port: 5554
 #wss-port: 5555
 
+http-port: 5080
+#https-port: 5443
+
 #loopback-only: false
 
 allow-client-urls: false
