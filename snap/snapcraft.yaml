@@ -37,7 +37,7 @@ parts:
     plugin: cmake
     source-type: git
     source: https://github.com/warmcat/libwebsockets.git
-    source-branch: v4.1-stable
+    source-branch: v4.2-stable
     cmake-parameters:
       - -DLWS_WITHOUT_TESTAPPS=ON
       - -DLWS_WITH_GLIB=ON
