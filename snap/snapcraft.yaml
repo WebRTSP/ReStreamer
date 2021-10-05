@@ -86,6 +86,7 @@ parts:
       - libgpm2
       - libpulse0
       - libx264-155
+      - libspdlog1
       - gstreamer1.0-plugins-good
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
