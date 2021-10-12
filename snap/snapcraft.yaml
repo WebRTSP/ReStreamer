@@ -13,7 +13,7 @@ description: |
   * **How to use it behind router/NAT:** https://github.com/WebRTSP/ReStreamer#how-to-access-it-behind-routernat-with-port-forwarding
   * **How to use it to access IP Cam behind router/NAT:** https://github.com/WebRTSP/ReStreamer#how-to-use-it-to-access-ip-cam-not-accessible-directly-and-without-any-port-forwarding
 license: GPL-3.0
-grade: devel
+grade: stable
 confinement: strict
 
 platforms:
