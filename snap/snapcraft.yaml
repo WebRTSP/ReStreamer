@@ -11,7 +11,7 @@ description: |
 
   **Online demo:** http://ipcam.stream:5080
 license: GPL-3.0
-grade: devel
+grade: stable
 confinement: strict
 
 architectures:
