@@ -30,12 +30,8 @@ CreatePeer(
     auto streamerIt = mountPoints->find(uri);
     if(streamerIt != mountPoints->end()) {
         return streamerIt->second->createPeer();
-    } else {
-        if(config->allowClientUrls)
-            return std::make_unique<GstReStreamer>(uri);
-        else
-            return nullptr;
-    }
+    } else
+        return nullptr;
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateSession(

@@ -106,11 +106,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
             loadedConfig.key = loadedHttpConfig.key;
         }
 
-        int allowClientUrls = false;
-        if(CONFIG_TRUE == config_lookup_bool(&config, "allow-client-urls", &allowClientUrls)) {
-            loadedConfig.allowClientUrls = allowClientUrls != false;
-        }
-
         config_setting_t* stunServerConfig = config_lookup(&config, "stun");
         if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
             const char* server = nullptr;

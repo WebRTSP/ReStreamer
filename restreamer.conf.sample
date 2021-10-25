@@ -8,8 +8,6 @@ http-port: 5080
 
 #loopback-only: false
 
-allow-client-urls: false
-
 streamers: (
   {name: "Bars",               url: "rtsp://ipcam.stream:8554/bars",                          description: "rtsp://ipcam.stream:8554/bars"},
   {name: "Price Center Plaza", url: "rtsp://132.239.12.145:554/axis-media/media.amp",         description: "rtsp://132.239.12.145:554/axis-media/media.amp"},
