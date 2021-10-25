@@ -10,38 +10,37 @@
 #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer.h"
 
+#include "RtStreaming/GstRtStreaming/GstTestStreamer2.h"
+#include "RtStreaming/GstRtStreaming/GstReStreamer2.h"
+
 #include "Log.h"
 #include "Session.h"
 
 
 static const auto Log = ReStreamerLog;
 
+typedef std::map<std::string, std::unique_ptr<GstStreamingSource>> MountPoints;
+
 static std::unique_ptr<WebRTCPeer>
 CreatePeer(
     const Config* config,
+    MountPoints* mountPoints,
     const std::string& uri)
 {
-    auto streamerIt = config->streamers.find(uri);
-
-    if(streamerIt != config->streamers.end()) {
-        const StreamerConfig& streamer = streamerIt->second;
-        switch(streamer.type) {
-        case StreamerConfig::Type::Test:
-            return std::make_unique<GstTestStreamer>(streamer.uri);
-        case StreamerConfig::Type::ReStreamer:
-            return std::make_unique<GstReStreamer>(streamer.uri);
-        default:
-            return std::make_unique<GstTestStreamer>();
-        }
-    } else
+    auto streamerIt = mountPoints->find(uri);
+    if(streamerIt != mountPoints->end()) {
+        return streamerIt->second->createPeer();
+    } else {
         if(config->allowClientUrls)
             return std::make_unique<GstReStreamer>(uri);
         else
             return nullptr;
+    }
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateSession(
     const Config* config,
+    MountPoints* mountPoints,
     Session::Cache* cache,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
@@ -50,7 +49,7 @@ static std::unique_ptr<rtsp::ServerSession> CreateSession(
         std::make_unique<Session>(
             config,
             cache,
-            std::bind(CreatePeer, config, std::placeholders::_1),
+            std::bind(CreatePeer, config, mountPoints, std::placeholders::_1),
             sendRequest, sendResponse);
 
     WebRTCPeer::IceServers iceServers;
@@ -72,6 +71,18 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
 
     GMainLoopPtr loopPtr(g_main_loop_new(context, FALSE));
     GMainLoop* loop = loopPtr.get();
+
+    MountPoints mountPoints;
+    for(const auto& pair: config.streamers) {
+        switch(pair.second.type) {
+        case StreamerConfig::Type::Test:
+            mountPoints.emplace(pair.first, std::make_unique<GstTestStreamer2>(pair.second.uri));
+            break;
+        case StreamerConfig::Type::ReStreamer:
+            mountPoints.emplace(pair.first, std::make_unique<GstReStreamer2>(pair.second.uri));
+            break;
+        }
+    }
 
     Session::Cache sessionsCache;
 
@@ -106,6 +117,7 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
         std::bind(
             CreateSession,
             &config,
+            &mountPoints,
             &sessionsCache,
             std::placeholders::_1,
             std::placeholders::_2));
