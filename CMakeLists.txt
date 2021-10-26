@@ -12,7 +12,6 @@ add_subdirectory(WebRTSP)
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-pkg_search_module(SPDLOG REQUIRED spdlog)
 pkg_search_module(LIBCONFIG REQUIRED libconfig)
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
