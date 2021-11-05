@@ -160,16 +160,12 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                     break;
                 }
 
+                const char* recordToken = "";
+                config_setting_lookup_string(streamerConfig, "record-token", &recordToken);
+
                 const char* type = nullptr;
                 config_setting_lookup_string(streamerConfig, "type", &type);
 
-                const char* uri;
-                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "uri", &uri) &&
-                   CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "url", &uri))
-                {
-                    Log()->warn("Missing streamer uri. Streamer skipped.");
-                    break;
-                }
                 const char* description = nullptr;
                 config_setting_lookup_string(streamerConfig, "description", &description);
 
@@ -178,9 +174,21 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                     streamerType = StreamerConfig::Type::ReStreamer;
                 else if(0 == strcmp(type, "test"))
                     streamerType = StreamerConfig::Type::Test;
+                else if(0 == strcmp(type, "record"))
+                    streamerType = StreamerConfig::Type::Record;
                 else {
                     Log()->warn("Unknown streamer type. Streamer skipped.");
                     break;
+                }
+
+                const char* uri = "";
+                if(streamerType != StreamerConfig::Type::Record ) {
+                    if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "uri", &uri) &&
+                       CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "url", &uri))
+                    {
+                        Log()->warn("Missing streamer uri. Streamer skipped.");
+                        break;
+                    }
                 }
 
                 CharPtr escapedNamePtr(
@@ -193,6 +201,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                     StreamerConfig {
                         streamerType,
                         uri,
+                        recordToken,
                         description ?
                             std::string(description) :
                             std::string() });

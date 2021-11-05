@@ -10,10 +10,12 @@ struct StreamerConfig
     enum class Type {
         Test,
         ReStreamer,
+        Record,
     };
 
     Type type;
     std::string uri;
+    std::string recordToken;
     std::string description;
 };
 

@@ -19,6 +19,13 @@ streamers: (
   {name: "Montana",            url: "rtsp://64.187.201.16/axis-media/media.amp",              description: "rtsp://64.187.201.16/axis-media/media.amp"},
   {name: "Western Cape",       url: "rtsp://196.21.92.82/axis-media/media.amp",               description: "rtsp://196.21.92.82/axis-media/media.amp"},
   {name: "Nordland",           url: "rtsp://77.110.228.219/axis-media/media.amp",             description: "rtsp://77.110.228.219/axis-media/media.amp"}
+#  ,
+#  {
+#    name: "Record",
+#    type: "record",
+#    record-token: "token",
+#    description: "Restreamed incoming RECORD stream"
+#  }
 )
 
 #stun-server: "stun://stun.l.google.com:19302"

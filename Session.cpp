@@ -16,17 +16,48 @@ Session::Session(
 {
 }
 
-bool Session::onOptionsRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+Session::Session(
+    const Config* config,
+    Cache* cache,
+    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
+    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
+    const std::function<void (const rtsp::Request*)>& sendRequest,
+    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    ServerSession(createPeer, createRecordPeer, sendRequest, sendResponse),
+    _config(config), _cache(cache)
 {
-    rtsp::Response response;
-    prepareOkResponse(requestPtr->cseq, &response);
+}
 
-    response.headerFields.emplace("Public", "LIST, DESCRIBE, SETUP, PLAY, TEARDOWN");
+bool Session::recordEnabled(const std::string& uri) noexcept
+{
+    auto it = _config->streamers.find(uri);
+    return
+        it != _config->streamers.end() &&
+        it->second.type == StreamerConfig::Type::Record;
+}
 
-    sendResponse(response);
+bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(requestPtr->method != rtsp::Method::RECORD)
+        return ServerSession::authorize(requestPtr);
 
-    return true;
+    auto it = _config->streamers.find(requestPtr->uri);
+    if(it == _config->streamers.end())
+        return false;
+
+    if(it->second.type != StreamerConfig::Type::Record)
+        return false;
+
+    if(it->second.recordToken.empty())
+        return true;
+
+    const std::pair<rtsp::Authentication, std::string> authPair =
+        rtsp::ParseAuthentication(*requestPtr);
+
+    if(authPair.first != rtsp::Authentication::Bearer) // FIXME? only Bearer supported atm
+        return false;
+
+    return authPair.second == it->second.recordToken;
 }
 
 bool Session::onListRequest(

@@ -12,6 +12,7 @@
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer2.h"
+#include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 
 #include "Log.h"
 #include "Session.h"
@@ -34,6 +35,19 @@ CreatePeer(
         return nullptr;
 }
 
+static std::unique_ptr<WebRTCPeer>
+CreateRecordPeer(
+    const Config* config,
+    MountPoints* mountPoints,
+    const std::string& uri)
+{
+    auto streamerIt = mountPoints->find(uri);
+    if(streamerIt != mountPoints->end()) {
+        return streamerIt->second->createRecordPeer();
+    } else
+        return nullptr;
+}
+
 static std::unique_ptr<rtsp::ServerSession> CreateSession(
     const Config* config,
     MountPoints* mountPoints,
@@ -46,6 +60,7 @@ static std::unique_ptr<rtsp::ServerSession> CreateSession(
             config,
             cache,
             std::bind(CreatePeer, config, mountPoints, std::placeholders::_1),
+            std::bind(CreateRecordPeer, config, mountPoints, std::placeholders::_1),
             sendRequest, sendResponse);
 
     WebRTCPeer::IceServers iceServers;
@@ -76,6 +91,9 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
             break;
         case StreamerConfig::Type::ReStreamer:
             mountPoints.emplace(pair.first, std::make_unique<GstReStreamer2>(pair.second.uri));
+            break;
+        case StreamerConfig::Type::Record:
+            mountPoints.emplace(pair.first, std::make_unique<GstRecordStreamer>());
             break;
         }
     }
