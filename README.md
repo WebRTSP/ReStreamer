@@ -37,7 +37,7 @@ sudo apt install build-essential git cmake \
 
 2. Build and install libwebsockets (at least v4.1 is required):
 ```
-git clone https://github.com/warmcat/libwebsockets.git --branch v4.1-stable --depth 1
+git clone https://github.com/warmcat/libwebsockets.git --branch v4.2-stable --depth 1
 mkdir -p libwebsockets-build
 cd libwebsockets-build
 cmake -DLWS_WITH_GLIB=ON ../libwebsockets
