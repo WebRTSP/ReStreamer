@@ -30,7 +30,7 @@ streamers: (
 1. Install required packages:
 ```
 sudo apt install build-essential git cmake \
-    libspdlog-dev libconfig-dev \
+    libspdlog-dev libconfig-dev libssl-dev \
     libgstreamer1.0-dev libgstreamer-plugins-bad1.0-dev \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-nice
 ```
