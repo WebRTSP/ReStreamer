@@ -63,14 +63,6 @@ static std::unique_ptr<rtsp::ServerSession> CreateSession(
             std::bind(CreateRecordPeer, config, mountPoints, std::placeholders::_1),
             sendRequest, sendResponse);
 
-    WebRTCPeer::IceServers iceServers;
-    if(!config->stunServer.empty())
-        iceServers.push_back(config->stunServer);
-    if(!config->turnServer.empty())
-        iceServers.push_back(config->turnServer);
-    if(!iceServers.empty())
-        session->setIceServers(iceServers);
-
     return session;
 }
 
@@ -114,10 +106,12 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
 
     std::string configJs =
         fmt::format("const WebRTSPPort = {};\r\n", config.port);
-    if(!config.stunServer.empty()) {
-        std::string stunServer = config.stunServer;
-        stunServer.erase(5, 2); // "stun://..." -> "stun:..."
-        configJs += fmt::format("const STUNServer = \"{}\";\r\n", stunServer);
+    for(std::string iceServer: config.iceServers) {
+        if(0 == iceServer.compare(0, 7, "stun://")) {
+            iceServer.erase(5, 2); // "stun://..." -> "stun:..."
+            configJs += fmt::format("const STUNServer = \"{}\";\r\n", iceServer);
+            break;
+        }
     }
 
     std::unique_ptr<http::Server> httpServerPtr;

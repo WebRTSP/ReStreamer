@@ -108,20 +108,32 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
 
         config_setting_t* stunServerConfig = config_lookup(&config, "stun");
         if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
-            const char* server = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(stunServerConfig, "server", &server)) {
-                loadedConfig.stunServer = server;
+            const char* stunServer = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(stunServerConfig, "server", &stunServer)) {
+                if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
+                    loadedConfig.iceServers.emplace_back(stunServer);
+                } else {
+                    Log()->error("STUN server URL should start with \"stun://\"");
+                }
             }
         }
 
         const char* stunServer = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "stun-server", &stunServer)) {
-            loadedConfig.stunServer = stunServer;
+            if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
+                loadedConfig.iceServers.emplace_back(stunServer);
+            } else {
+                Log()->error("STUN server URL should start with \"stun://\"");
+            }
         }
 
         const char* turnServer = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "turn-server", &turnServer)) {
-            loadedConfig.turnServer = turnServer;
+           if(0 == g_ascii_strncasecmp(turnServer, "turn://", 7)) {
+                loadedConfig.iceServers.emplace_back(turnServer);
+            } else {
+                Log()->error("TURN server URL should start with \"turn://\"");
+           }
         }
 
         config_setting_t* debugConfig = config_lookup(&config, "debug");
@@ -220,20 +232,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
         Log()->error("HTTPS acces requires \"certificate\" and \"key\" config keys to be specified.");
     } else if(loadedConfig.securePort && (loadedConfig.certificate.empty() || loadedConfig.key.empty())) {
         Log()->error("WSS acces requires \"certificate\" and \"key\" config keys to be specified.");
-    }
-
-    if(!loadedConfig.stunServer.empty() &&
-       g_ascii_strncasecmp(loadedConfig.stunServer.c_str(), "stun://", 7) != 0)
-    {
-        Log()->error("STUN server URL should start with \"stun://\"");
-        success = false;
-    }
-
-    if(!loadedConfig.turnServer.empty() &&
-       g_ascii_strncasecmp(loadedConfig.turnServer.c_str(), "turn://", 7) != 0)
-    {
-        Log()->error("TURN server URL should start with \"turn://\"");
-        success = false;
     }
 
     if(success) {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <deque>
+
 #include <spdlog/common.h>
 
 #include "Signalling/Config.h"
@@ -24,8 +26,8 @@ struct Config : public signalling::Config
     spdlog::level::level_enum logLevel = spdlog::level::info;
     spdlog::level::level_enum lwsLogLevel = spdlog::level::warn;
 
-    std::string stunServer;
-    std::string turnServer;
+    typedef std::deque<std::string> IceServers;
+    IceServers iceServers;
 
     std::map<std::string, StreamerConfig> streamers;
 };

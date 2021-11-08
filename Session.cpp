@@ -11,7 +11,7 @@ Session::Session(
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
-    ServerSession(createPeer, sendRequest, sendResponse),
+    ServerSession(config->iceServers, createPeer,sendRequest, sendResponse),
     _config(config), _cache(cache)
 {
 }
@@ -23,7 +23,7 @@ Session::Session(
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
-    ServerSession(createPeer, createRecordPeer, sendRequest, sendResponse),
+    ServerSession( config->iceServers, createPeer,createRecordPeer, sendRequest, sendResponse),
     _config(config), _cache(cache)
 {
 }
