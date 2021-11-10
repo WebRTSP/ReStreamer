@@ -13,6 +13,7 @@
 #include "Http/Log.h"
 #include "Http/Config.h"
 
+#include "RtStreaming/GstRtStreaming/Log.h"
 #include "RtStreaming/GstRtStreaming/LibGst.h"
 
 #include "Signalling/Log.h"
@@ -261,6 +262,7 @@ int main(int argc, char *argv[])
     InitHttpServerLogger(config.logLevel);
     InitWsServerLogger(config.logLevel);
     InitServerSessionLogger(config.logLevel);
+    InitGstRtStreamingLogger(config.logLevel);
     InitReStreamerLogger(config.logLevel);
 
     LibGst libGst;
