@@ -182,6 +182,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                 const char* description = nullptr;
                 config_setting_lookup_string(streamerConfig, "description", &description);
 
+                const char* forceH264ProfileLevelId = nullptr;
+                config_setting_lookup_string(streamerConfig, "force-h264-profile-level-id", &forceH264ProfileLevelId);
+
                 StreamerConfig::Type streamerType;
                 if(nullptr == type || 0 == strcmp(type, "restreamer"))
                     streamerType = StreamerConfig::Type::ReStreamer;
@@ -217,6 +220,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                         recordToken,
                         description ?
                             std::string(description) :
+                            std::string(),
+                        forceH264ProfileLevelId ?
+                            std::string(forceH264ProfileLevelId) :
                             std::string() });
             }
         }

@@ -82,7 +82,11 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
             mountPoints.emplace(pair.first, std::make_unique<GstTestStreamer2>(pair.second.uri));
             break;
         case StreamerConfig::Type::ReStreamer:
-            mountPoints.emplace(pair.first, std::make_unique<GstReStreamer2>(pair.second.uri));
+            mountPoints.emplace(
+                pair.first,
+                std::make_unique<GstReStreamer2>(
+                    pair.second.uri,
+                    pair.second.forceH264ProfileLevelId));
             break;
         case StreamerConfig::Type::Record:
             mountPoints.emplace(pair.first, std::make_unique<GstRecordStreamer>());

@@ -19,6 +19,7 @@ struct StreamerConfig
     std::string uri;
     std::string recordToken;
     std::string description;
+    std::string forceH264ProfileLevelId;
 };
 
 struct Config : public signalling::Config
