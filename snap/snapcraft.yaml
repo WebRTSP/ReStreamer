@@ -62,7 +62,7 @@ parts:
   restreamer:
     plugin: cmake
     source-type: git
-    source: https://github.com/WebRTSP/ReStreamer.git
+    source: .
     build-environment:
       - PKG_CONFIG_PATH: $SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:$SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:$PKG_CONFIG_PATH
     cmake-parameters:
