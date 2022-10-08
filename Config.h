@@ -12,6 +12,7 @@ struct StreamerConfig
     enum class Type {
         Test,
         ReStreamer,
+        ONVIFReStreamer,
         Record,
     };
 

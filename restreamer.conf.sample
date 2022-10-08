@@ -67,6 +67,13 @@ streamers: (
 #    type: "record",
 #    record-token: "token",
 #    description: "Restreamed incoming RECORD stream"
+#  },
+#  {
+#    name: "ONVIF",
+#    type: "onvif",
+#    url: "http://some.onvif.source.org/",
+#    description: "ONVIF source",
+#    force-h264-profile-level-id: "42c015"
   }
 )
 

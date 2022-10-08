@@ -12,6 +12,7 @@
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer2.h"
+#include "RtStreaming/GstRtStreaming/ONVIFReStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 
 #include "Log.h"
@@ -85,6 +86,13 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
             mountPoints.emplace(
                 pair.first,
                 std::make_unique<GstReStreamer2>(
+                    pair.second.uri,
+                    pair.second.forceH264ProfileLevelId));
+            break;
+        case StreamerConfig::Type::ONVIFReStreamer:
+            mountPoints.emplace(
+                pair.first,
+                std::make_unique<ONVIFReStreamer>(
                     pair.second.uri,
                     pair.second.forceH264ProfileLevelId));
             break;

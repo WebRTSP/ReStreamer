@@ -188,6 +188,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                 StreamerConfig::Type streamerType;
                 if(nullptr == type || 0 == strcmp(type, "restreamer"))
                     streamerType = StreamerConfig::Type::ReStreamer;
+                else if(0 == strcmp(type, "onvif"))
+                    streamerType = StreamerConfig::Type::ONVIFReStreamer;
                 else if(0 == strcmp(type, "test"))
                     streamerType = StreamerConfig::Type::Test;
                 else if(0 == strcmp(type, "record"))
