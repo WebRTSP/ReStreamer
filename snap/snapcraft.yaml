@@ -80,6 +80,8 @@ parts:
       - libconfig-dev
       - libgstreamer1.0-dev
       - libgstreamer-plugins-bad1.0-dev
+      - gsoap
+      - libgsoap-dev
     stage-packages:
       - libconfig9
       - libslang2
@@ -91,6 +93,7 @@ parts:
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
       - gstreamer1.0-nice
+      - libgsoap-2.8.91
 
 apps:
   ReStreamer:
