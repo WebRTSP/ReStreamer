@@ -77,6 +77,16 @@ streamers: (
   }
 )
 
+#realm = "ReStreamer"
+
+# TLS is mandatory for authorization!
+#users: (
+#  {
+#    login: "user",
+#    pass: "pass"
+#  }
+#)
+
 #stun-server: "stun://stun.l.google.com:19302"
 #turn-server: "turn://username:password@host:port"
 

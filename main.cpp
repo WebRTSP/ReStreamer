@@ -228,7 +228,41 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                             std::string() });
             }
         }
+
+        const char* realm = nullptr;
+        if(CONFIG_TRUE == config_lookup_string(&config, "realm", &realm)) {
+            loadedHttpConfig.realm = realm;
+        }
+
+        config_setting_t* usersConfig = config_lookup(&config, "users");
+        if(usersConfig && CONFIG_TRUE == config_setting_is_list(usersConfig)) {
+            const int usersCount = config_setting_length(usersConfig);
+            for(int userIdx = 0; userIdx < usersCount; ++userIdx) {
+                config_setting_t* userConfig =
+                    config_setting_get_elem(usersConfig, userIdx);
+                if(!userConfig || CONFIG_FALSE == config_setting_is_group(userConfig)) {
+                    Log()->warn("Wrong user config format. User skipped.");
+                    break;
+                }
+
+                const char* login = nullptr;
+                if(CONFIG_FALSE == config_setting_lookup_string(userConfig, "login", &login)) {
+                    Log()->warn("Missing user login. User skipped.");
+                    break;
+                }
+
+                const char* pass = nullptr;
+                if(CONFIG_FALSE == config_setting_lookup_string(userConfig, "pass", &pass)) {
+                    Log()->warn("Missing user password. User skipped.");
+                    break;
+                }
+
+                loadedHttpConfig.passwd.emplace(login, pass);
+            }
+        }
     }
+
+    loadedConfig.authorizeDescribe = !loadedHttpConfig.passwd.empty();
 
     bool success = true;
 

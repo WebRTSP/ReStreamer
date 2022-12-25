@@ -32,4 +32,5 @@ struct Config : public signalling::Config
     IceServers iceServers;
 
     std::map<std::string, StreamerConfig> streamers;
+    bool authorizeDescribe = true;
 };

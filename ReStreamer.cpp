@@ -3,7 +3,7 @@
 #include <CxxPtr/GlibPtr.h>
 #include <CxxPtr/libwebsocketsPtr.h>
 
-#include "Http/HttpServer.h"
+#include "Http/HttpMicroServer.h"
 
 #include "Signalling/WsServer.h"
 
@@ -18,6 +18,45 @@
 #include "Log.h"
 #include "Session.h"
 
+
+namespace {
+
+const unsigned AuthTokenCleanupInterval = 15; // seconds
+
+void OnNewAuthToken(
+    Session::SharedData* sessionsSharedData,
+    const std::string& token,
+    std::chrono::steady_clock::time_point expiresAt)
+{
+    sessionsSharedData->authTokens.emplace(token, Session::AuthTokenData { expiresAt });
+}
+
+void CleanupAuthTokens(Session::SharedData* sessionsSharedData)
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    auto& authTokens = sessionsSharedData->authTokens;
+    for(auto it = authTokens.begin(); it != authTokens.end();) {
+        if(it->second.expiresAt < now)
+            it = authTokens.erase(it);
+        else
+            ++it;
+    }
+}
+
+void ScheduleAuthTokensCleanup(Session::SharedData* sessionsSharedData) {
+    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(AuthTokenCleanupInterval));
+    GSource* timeoutSource = timeoutSourcePtr.get();
+    g_source_set_callback(timeoutSource,
+        [] (gpointer userData) -> gboolean {
+            Session::SharedData* sessionsSharedData = reinterpret_cast<Session::SharedData*>(userData);
+            CleanupAuthTokens(sessionsSharedData);
+            return false;
+        }, sessionsSharedData, nullptr);
+    g_source_attach(timeoutSource, g_main_context_get_thread_default());
+}
+
+}
 
 static const auto Log = ReStreamerLog;
 
@@ -52,14 +91,14 @@ CreateRecordPeer(
 static std::unique_ptr<rtsp::ServerSession> CreateSession(
     const Config* config,
     MountPoints* mountPoints,
-    Session::Cache* cache,
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+    Session::SharedData* sharedData,
+    const std::function<void (const rtsp::Request*)>& sendRequest,
+    const std::function<void (const rtsp::Response*)>& sendResponse)
 {
     std::unique_ptr<Session> session =
         std::make_unique<Session>(
             config,
-            cache,
+            sharedData,
             std::bind(CreatePeer, config, mountPoints, std::placeholders::_1),
             std::bind(CreateRecordPeer, config, mountPoints, std::placeholders::_1),
             sendRequest, sendResponse);
@@ -102,7 +141,8 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
         }
     }
 
-    Session::Cache sessionsCache;
+    Session::SharedData sessionsSharedData;
+    ScheduleAuthTokensCleanup(&sessionsSharedData);
 
     lws_context_creation_info lwsInfo {};
     lwsInfo.gid = -1;
@@ -126,11 +166,6 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
         }
     }
 
-    std::unique_ptr<http::Server> httpServerPtr;
-    if(httpConfig.port || (httpConfig.securePort && !httpConfig.certificate.empty() && !httpConfig.key.empty())) {
-        httpServerPtr = std::make_unique<http::Server>(httpConfig, configJs, loop);
-    }
-
     signalling::WsServer server(
         config,
         loop,
@@ -138,11 +173,22 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
             CreateSession,
             &config,
             &mountPoints,
-            &sessionsCache,
+            &sessionsSharedData,
             std::placeholders::_1,
             std::placeholders::_2));
 
-    if((!httpServerPtr || httpServerPtr->init(lwsContext)) && server.init(lwsContext))
+    std::unique_ptr<http::MicroServer> httpServerPtr;
+    if(httpConfig.port || (httpConfig.securePort && !httpConfig.certificate.empty() && !httpConfig.key.empty())) {
+        httpServerPtr =
+            std::make_unique<http::MicroServer>(
+                httpConfig,
+                configJs,
+                std::bind(OnNewAuthToken, &sessionsSharedData, std::placeholders::_1, std::placeholders::_2),
+                context);
+    }
+
+
+    if((!httpServerPtr || httpServerPtr->init()) && server.init(lwsContext))
         g_main_loop_run(loop);
     else
         return -1;
