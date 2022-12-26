@@ -82,6 +82,9 @@ parts:
       - libgsoap-2.8.117
       - libmicrohttpd12
       - libnice10
+    prime:
+      - -usr/lib/arm-linux-gnueabihf/libde265.so.0.1.1
+      - -usr/lib/arm-linux-gnueabihf/libmpeg2.so.0.1.0
 
 apps:
   ReStreamer:
