@@ -36,10 +36,10 @@ bool Session::recordEnabled(const std::string& uri) noexcept
         it->second.type == StreamerConfig::Type::Record;
 }
 
-bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool Session::authorizeRecord(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(requestPtr->method != rtsp::Method::RECORD)
-        return ServerSession::authorize(requestPtr);
+        return false;
 
     auto it = _config->streamers.find(requestPtr->uri);
     if(it == _config->streamers.end())
@@ -64,8 +64,17 @@ bool Session::authorize(
     const std::unique_ptr<rtsp::Request>& requestPtr,
     const std::optional<std::string>& authCookie) noexcept
 {
-    if(requestPtr->method != rtsp::Method::DESCRIBE)
-        return ServerSession::authorize(requestPtr);
+    switch(requestPtr->method) {
+    case rtsp::Method::RECORD:
+        return authorizeRecord(requestPtr);
+    case rtsp::Method::DESCRIBE:
+        if(_config->authorizeDescribe)
+            break;
+        else
+            return ServerSession::authorize(requestPtr, authCookie);
+    default:
+        return ServerSession::authorize(requestPtr, authCookie);
+    }
 
     if(!_config->authorizeDescribe)
         return true;

@@ -37,7 +37,7 @@ public:
 protected:
     bool listEnabled() noexcept override { return true; }
     bool recordEnabled(const std::string& uri) noexcept override;
-    bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool authorizeRecord(const std::unique_ptr<rtsp::Request>&) noexcept;
     bool authorize(
         const std::unique_ptr<rtsp::Request>&,
         const std::optional<std::string>& authCookie) noexcept override;
