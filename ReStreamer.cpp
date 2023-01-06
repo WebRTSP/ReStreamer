@@ -88,12 +88,12 @@ CreateRecordPeer(
         return nullptr;
 }
 
-static std::unique_ptr<rtsp::ServerSession> CreateSession(
+static std::unique_ptr<ServerSession> CreateSession(
     const Config* config,
     MountPoints* mountPoints,
     Session::SharedData* sharedData,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse)
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse)
 {
     std::unique_ptr<Session> session =
         std::make_unique<Session>(

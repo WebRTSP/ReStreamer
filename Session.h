@@ -23,16 +23,16 @@ public:
     Session(
         const Config*,
         SharedData*,
-        const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
-        const std::function<void (const rtsp::Request*)>& sendRequest,
-        const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
+        const CreatePeer& createPeer,
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept;
     Session(
         const Config*,
         SharedData*,
-        const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
-        const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
-        const std::function<void (const rtsp::Request*)>& sendRequest,
-        const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
+        const CreatePeer& createPeer,
+        const CreatePeer& createRecordPeer,
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept;
 
 protected:
     bool listEnabled() noexcept override { return true; }

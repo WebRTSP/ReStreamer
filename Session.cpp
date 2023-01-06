@@ -8,9 +8,9 @@
 Session::Session(
     const Config* config,
     SharedData* sharedData,
-    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    const CreatePeer& createPeer,
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse) noexcept :
     ServerSession(config->iceServers, createPeer,sendRequest, sendResponse),
     _config(config), _sharedData(sharedData)
 {
@@ -19,10 +19,10 @@ Session::Session(
 Session::Session(
     const Config* config,
     SharedData* sharedData,
-    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
-    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    const CreatePeer& createPeer,
+    const CreatePeer& createRecordPeer,
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse) noexcept :
     ServerSession(config->iceServers, createPeer, createRecordPeer, sendRequest, sendResponse),
     _config(config), _sharedData(sharedData)
 {
