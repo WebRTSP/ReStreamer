@@ -49,6 +49,8 @@ if(SNAPCRAFT_BUILD)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/www
         DESTINATION /opt/$ENV{SNAPCRAFT_PROJECT_NAME}
         FILES_MATCHING
+        PATTERN "www/3rd_party/*.js"
+        PATTERN "www/3rd_party/*.css"
         PATTERN "www/WebRTSP/*.mjs"
         PATTERN "www/css/*.css"
         PATTERN "www/index.html")
