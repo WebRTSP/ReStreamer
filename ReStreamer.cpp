@@ -106,6 +106,37 @@ static std::unique_ptr<ServerSession> CreateSession(
     return session;
 }
 
+static void OnRecorderConnected(Session::SharedData* sharedData, const std::string& uri)
+{
+    Log()->info("Recorder connected to \"{}\" streamer", uri);
+
+    Session::RecordMountpointData& data = sharedData->recordMountpointsData[uri];
+
+    data.recording = true;
+
+    std::unordered_map<ServerSession*, rtsp::SessionId> subscriptions;
+    data.subscriptions.swap(subscriptions);
+    for(auto& session2session: subscriptions) {
+        ServerSession* session = session2session.first;
+        const rtsp::SessionId& mediaSession = session2session.second;
+        session->startRecordToClient(uri, mediaSession);
+    }
+}
+
+static void OnRecorderDisconnected(Session::SharedData* sharedData, const std::string& uri)
+{
+    Log()->info("Recorder disconnected from \"{}\" streamer", uri);
+
+    auto it = sharedData->recordMountpointsData.find(uri);
+    if(it == sharedData->recordMountpointsData.end()) {
+        return;
+    }
+
+    Session::RecordMountpointData& data = it->second;
+    data.recording = false;
+    assert(data.subscriptions.empty());
+}
+
 int ReStreamerMain(const http::Config& httpConfig, const Config& config)
 {
     GMainContextPtr contextPtr(g_main_context_new());
@@ -114,6 +145,8 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
 
     GMainLoopPtr loopPtr(g_main_loop_new(context, FALSE));
     GMainLoop* loop = loopPtr.get();
+
+    Session::SharedData sessionsSharedData;
 
     MountPoints mountPoints;
     for(const auto& pair: config.streamers) {
@@ -136,12 +169,15 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
                     pair.second.forceH264ProfileLevelId));
             break;
         case StreamerConfig::Type::Record:
-            mountPoints.emplace(pair.first, std::make_unique<GstRecordStreamer>());
+            mountPoints.emplace(
+                pair.first,
+                std::make_unique<GstRecordStreamer>(
+                    std::bind(OnRecorderConnected, &sessionsSharedData, pair.first),
+                    std::bind(OnRecorderDisconnected, &sessionsSharedData, pair.first)));
             break;
         }
     }
 
-    Session::SharedData sessionsSharedData;
     ScheduleAuthTokensCleanup(&sessionsSharedData);
 
     lws_context_creation_info lwsInfo {};

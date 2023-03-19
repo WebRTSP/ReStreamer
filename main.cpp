@@ -268,7 +268,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
         }
     }
 
-    loadedConfig.authorizeDescribe = !loadedHttpConfig.passwd.empty();
+    loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();
 
     bool success = true;
 

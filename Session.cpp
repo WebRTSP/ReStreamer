@@ -4,6 +4,10 @@
 
 #include "RtspParser/RtspParser.h"
 
+#include "Log.h"
+
+
+static const auto Log = ReStreamerLog;
 
 Session::Session(
     const Config* config,
@@ -28,7 +32,22 @@ Session::Session(
 {
 }
 
+Session::~Session() {
+    for(auto& pair :_sharedData->recordMountpointsData) {
+        RecordMountpointData& data = pair.second;
+        data.subscriptions.erase(this);
+    }
+}
+
 bool Session::recordEnabled(const std::string& uri) noexcept
+{
+    auto it = _config->streamers.find(uri);
+    return
+        it != _config->streamers.end() &&
+        it->second.type == StreamerConfig::Type::Record;
+}
+
+bool Session::subscribeEnabled(const std::string& uri) noexcept
 {
     auto it = _config->streamers.find(uri);
     return
@@ -67,8 +86,9 @@ bool Session::authorize(
     switch(requestPtr->method) {
     case rtsp::Method::RECORD:
         return authorizeRecord(requestPtr);
+    case rtsp::Method::SUBSCRIBE:
     case rtsp::Method::DESCRIBE:
-        if(_config->authorizeDescribe) {
+        if(_config->authRequired) {
             if(!authCookie)
                 return false;
 
@@ -106,6 +126,39 @@ bool Session::onListRequest(
     }
 
     sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->listCache);
+
+    return true;
+}
+
+bool Session::onSubscribeRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    auto it = _config->streamers.find(requestPtr->uri);
+    if(it == _config->streamers.end())
+        return false;
+
+    if(it->second.type != StreamerConfig::Type::Record)
+        return false;
+
+    RecordMountpointData& data = _sharedData->recordMountpointsData[requestPtr->uri];
+    auto selfIt = data.subscriptions.find(this);
+    if(selfIt != data.subscriptions.end()) {
+        Log()->error("Second try to subscribe to the same streamer \"{}\"", requestPtr->uri);
+        return false;
+    }
+
+    rtsp::SessionId mediaSessionId = nextSessionId();
+    if(!data.recording) {
+        Log()->info("Streamer \"{}\" not active yet. Subscribing...", requestPtr->uri);
+        data.subscriptions.emplace(this, mediaSessionId);
+    }
+
+    sendOkResponse(requestPtr->cseq, mediaSessionId);
+
+    if(data.recording) {
+        Log()->info("Streamer \"{}\" already active. Starting record to client...", requestPtr->uri);
+        startRecordToClient(requestPtr->uri, mediaSessionId);
+    }
 
     return true;
 }
