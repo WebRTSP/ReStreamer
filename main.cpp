@@ -292,8 +292,10 @@ int main(int argc, char *argv[])
 #ifdef SNAPCRAFT_BUILD
     const gchar* snapPath = g_getenv("SNAP");
     const gchar* snapName = g_getenv("SNAP_NAME");
-    if(snapPath && snapName)
-        httpConfig.wwwRoot = std::string(snapPath) + "/opt/" + snapName + "/www";
+    if(snapPath && snapName) {
+        GCharPtr wwwRootPtr(g_build_path(G_DIR_SEPARATOR_S, snapPath, "opt", snapName, "www", NULL));
+        httpConfig.wwwRoot = wwwRootPtr.get();
+    }
 #endif
     Config config {};
     config.bindToLoopbackOnly = false;
