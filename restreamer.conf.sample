@@ -8,6 +8,10 @@ http-port: 5080
 
 #loopback-only: false
 
+// absolute or relative (based on %SNAP_COMMON% in case of snap package, or current dir in other cases) path
+// to custom web client
+#www-root: "www"
+
 streamers: (
   {
     name: "Price Center Plaza",

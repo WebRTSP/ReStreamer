@@ -5,6 +5,7 @@
 #include <libwebsockets.h>
 
 #include <CxxPtr/CPtr.h>
+#include <CxxPtr/GlibPtr.h>
 #include "CxxPtr/libconfigDestroy.h"
 
 #include "Helpers/ConfigHelpers.h"
@@ -52,6 +53,11 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                 configFile,
                 config_error_line(&config));
             return false;
+        }
+
+        const char* wwwRoot = nullptr;
+        if(CONFIG_TRUE == config_lookup_string(&config, "www-root", &wwwRoot)) {
+            loadedHttpConfig.wwwRoot = wwwRoot;
         }
 
         const char* host = nullptr;
@@ -301,6 +307,14 @@ int main(int argc, char *argv[])
     config.bindToLoopbackOnly = false;
     if(!LoadConfig(&httpConfig, &config))
         return -1;
+
+#ifdef SNAPCRAFT_BUILD
+    const gchar* snapCommon = g_getenv("SNAP_COMMON");
+    if(!g_path_is_absolute(httpConfig.wwwRoot.c_str()) && snapCommon) {
+        GCharPtr wwwRootPtr(g_build_path(G_DIR_SEPARATOR_S, snapCommon, httpConfig.wwwRoot.c_str(), NULL));
+        httpConfig.wwwRoot = wwwRootPtr.get();
+    }
+#endif
 
     InitLwsLogger(config.lwsLogLevel);
     InitHttpServerLogger(config.logLevel);
