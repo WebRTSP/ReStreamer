@@ -68,30 +68,25 @@ bool Session::authorize(
     case rtsp::Method::RECORD:
         return authorizeRecord(requestPtr);
     case rtsp::Method::DESCRIBE:
-        if(_config->authorizeDescribe)
-            break;
-        else
-            return ServerSession::authorize(requestPtr, authCookie);
-    default:
-        return ServerSession::authorize(requestPtr, authCookie);
+        if(_config->authorizeDescribe) {
+            if(!authCookie)
+                return false;
+
+            auto it = _sharedData->authTokens.find(authCookie.value());
+            if(it == _sharedData->authTokens.end())
+                return false;
+
+            const AuthTokenData& tokenData = it->second;
+
+            if(tokenData.expiresAt < std::chrono::steady_clock::now())
+                return false;
+
+            return true;
+        }
+        break;
     }
 
-    if(!_config->authorizeDescribe)
-        return true;
-
-    if(!authCookie)
-        return false;
-
-    auto it = _sharedData->authTokens.find(authCookie.value());
-    if(it == _sharedData->authTokens.end())
-        return false;
-
-    const AuthTokenData& tokenData = it->second;
-
-    if(tokenData.expiresAt < std::chrono::steady_clock::now())
-        return false;
-
-    return true;
+    return ServerSession::authorize(requestPtr, authCookie);
 }
 
 bool Session::onListRequest(
