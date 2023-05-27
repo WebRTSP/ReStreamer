@@ -16,6 +16,7 @@ struct StreamerConfig
         Record,
     };
 
+    bool restream;
     Type type;
     std::string uri;
     std::string recordToken;

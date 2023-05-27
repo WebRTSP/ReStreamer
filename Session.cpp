@@ -117,6 +117,8 @@ bool Session::onListRequest(
             _sharedData->listCache = "\r\n";
         else {
             for(const auto& pair: _config->streamers) {
+                if(!pair.second.restream) continue;
+
                 _sharedData->listCache += pair.first;
                 _sharedData->listCache += ": ";
                 _sharedData->listCache += pair.second.description;

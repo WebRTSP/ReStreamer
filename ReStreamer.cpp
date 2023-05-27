@@ -68,6 +68,10 @@ CreatePeer(
     MountPoints* mountPoints,
     const std::string& uri)
 {
+    auto configStreamerIt = config->streamers.find(uri);
+    if(configStreamerIt == config->streamers.end() || !configStreamerIt->second.restream)
+        return nullptr;
+
     auto streamerIt = mountPoints->find(uri);
     if(streamerIt != mountPoints->end()) {
         return streamerIt->second->createPeer();

@@ -47,7 +47,8 @@ streamers: (
     name: "Montana",
     url: "rtsp://64.187.201.16/axis-media/media.amp",
     description: "rtsp://64.187.201.16/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    restream: false
   },
   {
     name: "Western Cape",
@@ -62,6 +63,7 @@ streamers: (
     force-h264-profile-level-id: "42c015"
 #  },
 #  {
+#    restream: true,
 #    name: "Record",
 #    type: "record",
 #    record-token: "token",

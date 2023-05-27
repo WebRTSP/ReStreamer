@@ -179,6 +179,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                     break;
                 }
 
+                int restream = TRUE;
+                config_setting_lookup_bool(streamerConfig, "restream", &restream);
+
                 const char* recordToken = "";
                 config_setting_lookup_string(streamerConfig, "record-token", &recordToken);
 
@@ -223,6 +226,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                 loadedConfig.streamers.emplace(
                     escapedNamePtr.get(),
                     StreamerConfig {
+                        restream != FALSE,
                         streamerType,
                         uri,
                         recordToken,
