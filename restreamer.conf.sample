@@ -68,6 +68,11 @@ streamers: (
 #    type: "record",
 #    record-token: "token",
 #    description: "Restreamed incoming RECORD stream"
+//   absolute or relative (based on %SNAP_COMMON% in case of snap package, or current dir in other cases) path
+//   where to place recorded files
+#    recordings-dir: "recordings"
+#    recordings-dir-max-size: 1024 // Mb
+#    recording-chunk-size: 100 // Mb
 #  },
 #  {
 #    name: "ONVIF",

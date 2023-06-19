@@ -218,13 +218,33 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                     }
                 }
 
+                const char* recordingsDir = nullptr;
+                config_setting_lookup_string(streamerConfig, "recordings-dir", &recordingsDir);
+
+                int recordingsDirMaxSize = 1024;
+                config_setting_lookup_int(streamerConfig, "recordings-dir-max-size", &recordingsDirMaxSize);
+                if(recordingsDirMaxSize < 0) recordingsDirMaxSize = 0;
+
+                int recordingChunkSize = 100;
+                config_setting_lookup_int(streamerConfig, "recording-chunk-size", &recordingChunkSize);
+                if(recordingChunkSize < 0) recordingChunkSize = 0;
+
                 CharPtr escapedNamePtr(
                     g_uri_escape_string(name, nullptr, false));
                 if(!escapedNamePtr)
                     break; // insufficient memory?
 
+                std::string escapedName(escapedNamePtr.get());
+                std::optional<RecordConfig> recordConfig;
+                if(recordingsDir) {
+                    recordConfig.emplace(
+                        std::filesystem::path(recordingsDir) / escapedName,
+                        recordingsDirMaxSize * (1ull << 20),
+                        recordingChunkSize * (1ull << 20));
+                }
+
                 loadedConfig.streamers.emplace(
-                    escapedNamePtr.get(),
+                    escapedName,
                     StreamerConfig {
                         restream != FALSE,
                         streamerType,
@@ -235,7 +255,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                             std::string(),
                         forceH264ProfileLevelId ?
                             std::string(forceH264ProfileLevelId) :
-                            std::string() });
+                            std::string(),
+                        recordConfig });
             }
         }
 
