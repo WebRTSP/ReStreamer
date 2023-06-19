@@ -154,6 +154,8 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
 
     MountPoints mountPoints;
     for(const auto& pair: config.streamers) {
+        if(!pair.second.restream)
+            continue;
         switch(pair.second.type) {
         case StreamerConfig::Type::Test:
             mountPoints.emplace(pair.first, std::make_unique<GstTestStreamer2>(pair.second.uri));
