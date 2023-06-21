@@ -142,6 +142,9 @@ bool Session::onSubscribeRequest(
     if(it->second.type != StreamerConfig::Type::Record)
         return false;
 
+    if(!it->second.restream)
+        return false;
+
     RecordMountpointData& data = _sharedData->recordMountpointsData[requestPtr->uri];
     auto selfIt = data.subscriptions.find(this);
     if(selfIt != data.subscriptions.end()) {
