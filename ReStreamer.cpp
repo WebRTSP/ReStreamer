@@ -288,7 +288,7 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
 
     MountPoints mountPoints;
     for(const auto& pair: config.streamers) {
-        if(pair.second.type != StreamerConfig::Type::Record && !pair.second.restream)
+        if((pair.second.type != StreamerConfig::Type::Record || !pair.second.recordConfig) && !pair.second.restream)
             continue;
 
         switch(pair.second.type) {
