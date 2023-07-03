@@ -26,7 +26,7 @@
 static const auto Log = ReStreamerLog;
 
 
-static bool LoadConfig(http::Config* httpConfig, Config* config)
+static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* basePath)
 {
     const std::deque<std::string> configDirs = ::ConfigDirs();
     if(configDirs.empty())
@@ -238,7 +238,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config)
                 std::optional<RecordConfig> recordConfig;
                 if(recordingsDir) {
                     recordConfig.emplace(
-                        std::filesystem::path(recordingsDir) / escapedName,
+                        !basePath || g_path_is_absolute(recordingsDir) != FALSE ?
+                            std::filesystem::path(recordingsDir) / escapedName :
+                            std::filesystem::path(basePath) / recordingsDir / escapedName,
                         recordingsDirMaxSize * (1ull << 20),
                         recordingChunkSize * (1ull << 20));
                 }
@@ -320,6 +322,9 @@ int main(int argc, char *argv[])
 {
     http::Config httpConfig {};
     httpConfig.bindToLoopbackOnly = false;
+
+    const gchar* basePath = nullptr;
+
 #ifdef SNAPCRAFT_BUILD
     const gchar* snapPath = g_getenv("SNAP");
     const gchar* snapName = g_getenv("SNAP_NAME");
@@ -327,10 +332,12 @@ int main(int argc, char *argv[])
         GCharPtr wwwRootPtr(g_build_path(G_DIR_SEPARATOR_S, snapPath, "opt", snapName, "www", NULL));
         httpConfig.wwwRoot = wwwRootPtr.get();
     }
+
+    basePath = g_getenv("SNAP_COMMON");
 #endif
     Config config {};
     config.bindToLoopbackOnly = false;
-    if(!LoadConfig(&httpConfig, &config))
+    if(!LoadConfig(&httpConfig, &config, basePath))
         return -1;
 
 #ifdef SNAPCRAFT_BUILD
