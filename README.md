@@ -46,5 +46,8 @@ streamers: (
 4. Configure `webrtsp-record-streamer` as described [here](https://github.com/WebRTSP/RecordStreamer#how-to-use-it-as-streamer-for-cloud-dvr-with-motion-detection);
 5. Finally with above config recordigns will be available in `/var/snap/rtsp-to-webrtsp/common/DVR/`;
 
+### How enable TLS with Let's Encrypt certificate (highly recommended)
+* Run: `./enableTLS.sh root@host_where_snap_installed.com:22 you@gmail.com`;
+
 ### Troubleshooting
 * To see application logs in realtime run: `sudo snap logs rtsp-to-webrtsp -f`;
