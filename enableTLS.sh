@@ -31,6 +31,8 @@ elif [[ ${#PARTS[*]} -eq 2 ]]; then
   TARGET_PORT=${PARTS[1]}
 fi
 
+echo ssh $TARGET_USER@$TARGET_DOMAIN -p $TARGET_PORT
+
 ssh $TARGET_USER@$TARGET_DOMAIN -p $TARGET_PORT <<EOF
 
 set -e
