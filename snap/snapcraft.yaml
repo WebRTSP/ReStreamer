@@ -37,6 +37,7 @@ parts:
     source: https://github.com/warmcat/libwebsockets.git
     source-branch: v4.3-stable
     cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
       - -DLWS_WITHOUT_TESTAPPS=ON
       - -DLWS_WITH_GLIB=ON
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
