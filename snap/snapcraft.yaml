@@ -19,18 +19,72 @@ architectures:
   - build-on: armhf
   - build-on: arm64
 
-environment:
-  GST_DEBUG: 2
-  GST_DEBUG_NO_COLOR: 1
-  GST_PLUGIN_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0
-  GST_PLUGIN_SYSTEM_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0
-  GST_PLUGIN_SCANNER: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
-
 layout:
   /opt/rtsp-to-webrtsp/lib:
     symlink: $SNAP/opt/rtsp-to-webrtsp/lib
 
 parts:
+  meson-deps:
+    plugin: nil
+    override-build: |
+      pip install meson
+    build-packages:
+      - python3-pip
+  gstreamer:
+    plugin: meson
+    source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+    source-branch: 1.22
+    after:
+      - meson-deps
+    build-packages:
+      - ninja-build
+      - flex
+      - bison
+      - nasm
+      - libsrtp2-dev
+    meson-parameters:
+      - --prefix=/opt/${SNAPCRAFT_PROJECT_NAME}
+      - -Dauto_features=disabled
+      - -Dpython=disabled
+      - -Dlibav=disabled
+      - -Dlibnice=enabled
+      - -Dbase=enabled
+      - -Dgood=enabled
+      - -Dugly=disabled
+      - -Dbad=enabled
+      - -Ddevtools=disabled
+      - -Drtsp_server=disabled
+      - -Dgst-examples=disabled
+      - -Dqt5=disabled
+      - -Dtools=disabled
+      - -Dtests=disabled
+      - -Dexamples=disabled
+      - -Dintrospection=disabled
+      - -Dnls=disabled
+      - -Ddoc=disabled
+      - -Dgstreamer:ptp-helper-permissions=none
+      - -Dlibnice:gupnp=auto
+      - -Dlibnice:gstreamer=enabled
+      - -Dlibnice:crypto-library=auto
+      - -Dgst-plugins-base:playback=enabled
+      - -Dgst-plugins-good:rtsp=enabled
+      - -Dgst-plugins-good:rtpmanager=enabled
+      - -Dgst-plugins-good:udp=enabled
+      - -Dgst-plugins-good:rtp=enabled
+      - -Dgst-plugins-good:debugutils=enabled
+      - -Dgst-plugins-good:multifile=enabled
+      - -Dgst-plugins-good:isomp4=enabled
+      - -Dgst-plugins-bad:webrtc=enabled
+      - -Dgst-plugins-bad:codectimestamper=enabled
+      - -Dgst-plugins-bad:videoparsers=enabled
+      - -Dgst-plugins-bad:dtls=enabled
+      - -Dgst-plugins-bad:srtp=enabled
+    stage-packages:
+      - libunwind8
+      - libdw1
+      - libgupnp-1.2-1
+      - libgupnp-igd-1.0-4
+      - libsrtp2-1
   lws:
     plugin: cmake
     source-type: git
@@ -52,6 +106,7 @@ parts:
     source: .
     build-environment:
       - PKG_CONFIG_PATH: $SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:$SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/pkgconfig:${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
+      - LD_LIBRARY_PATH: $SNAPCRAFT_STAGE/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
@@ -60,34 +115,20 @@ parts:
         craftctl set version="$(git describe --always)"
     after:
       - lws
+      - gstreamer
     build-packages:
       - g++
       - make
       - libspdlog-dev
       - libconfig-dev
-      - libgstreamer1.0-dev
-      - libgstreamer-plugins-bad1.0-dev
       - gsoap
       - libgsoap-dev
       - libmicrohttpd-dev
-      - libnice-dev
     stage-packages:
       - libconfig9
-      - libslang2
-      - libgpm2
-      - libpulse0
       - libspdlog1
-      - gstreamer1.0-plugins-good
-      - gstreamer1.0-plugins-bad
-      - gstreamer1.0-plugins-ugly
-      - gstreamer1.0-nice
       - libgsoap-2.8.117
       - libmicrohttpd12
-      - libnice10
-    prime:
-      - -usr/lib/arm-linux-gnueabihf/libde265.so.0.1.1
-      - -usr/lib/arm-linux-gnueabihf/libmpeg2.so.0.1.0
-
 apps:
   ReStreamer:
     command: opt/${SNAPCRAFT_PROJECT_NAME}/bin/ReStreamer
@@ -96,4 +137,9 @@ apps:
       - network-bind
       - network
     environment:
-      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$LD_LIBRARY_PATH
+      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:$LD_LIBRARY_PATH
+      GST_DEBUG: 2
+      GST_DEBUG_NO_COLOR: 1
+      GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
+      GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
+      GST_PLUGIN_SCANNER: $SNAP/opt/${SNAP_NAME}/libexec/gstreamer-1.0/gst-plugin-scanner
