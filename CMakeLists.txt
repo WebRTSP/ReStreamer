@@ -54,5 +54,6 @@ if(SNAPCRAFT_BUILD)
         PATTERN "www/3rd_party/*.css"
         PATTERN "www/WebRTSP/*.mjs"
         PATTERN "www/css/*.css"
-        PATTERN "www/index.html")
+        PATTERN "www/index.html"
+        PATTERN "www/favicon.ico")
 endif()
