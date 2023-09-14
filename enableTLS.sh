@@ -61,7 +61,7 @@ server {
   location = /Config.js {
     proxy_pass http://localhost:5080/Config.js;
     sub_filter 'const WebRTSPPort = 5554;' 'const WebRTSPPort = 5555;';
-    sub_filter_types text/html text/javascript application/javascript;
+    sub_filter_types text/javascript application/javascript;
     sub_filter_once on;
   }
 
