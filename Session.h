@@ -22,9 +22,10 @@ public:
     };
 
     struct SharedData {
-        std::string listCache;
+        const std::string listCache;
         std::unordered_map<std::string, const AuthTokenData> authTokens;
         std::map<std::string, RecordMountpointData> recordMountpointsData;
+        std::map<std::string, std::string> mountpointsListsCache;
     };
 
     Session(
@@ -43,7 +44,8 @@ public:
     ~Session();
 
 protected:
-    bool listEnabled(const std::string& /*uri*/) noexcept override { return true; }
+    bool listEnabled(const std::string& uri) noexcept override;
+    bool playEnabled(const std::string& uri) noexcept override;
     bool recordEnabled(const std::string& uri) noexcept override;
     bool subscribeEnabled(const std::string& uri) noexcept override;
     bool authorizeRecord(const std::unique_ptr<rtsp::Request>&) noexcept;

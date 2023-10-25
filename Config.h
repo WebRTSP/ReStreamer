@@ -35,6 +35,7 @@ struct StreamerConfig
         ReStreamer,
         ONVIFReStreamer,
         Record,
+        FilePlayer,
     };
 
     bool restream;

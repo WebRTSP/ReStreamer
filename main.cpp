@@ -195,14 +195,23 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 const char* forceH264ProfileLevelId = nullptr;
                 config_setting_lookup_string(streamerConfig, "force-h264-profile-level-id", &forceH264ProfileLevelId);
 
+                const char* uri = nullptr;
+                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "uri", &uri))
+                   config_setting_lookup_string(streamerConfig, "url", &uri);
+
                 const char* username = nullptr;
                 config_setting_lookup_string(streamerConfig, "username", &username);
 
                 const char* password = nullptr;
                 config_setting_lookup_string(streamerConfig, "password", &password);
 
+                const char* dir = nullptr;
+                config_setting_lookup_string(streamerConfig, "dir", &dir);
+
                 StreamerConfig::Type streamerType;
-                if(nullptr == type || 0 == strcmp(type, "restreamer"))
+                if((type == nullptr && dir != nullptr) || 0 == g_strcmp0(type, "player"))
+                    streamerType = StreamerConfig::Type::FilePlayer;
+                else if(type == nullptr || 0 == strcmp(type, "restreamer"))
                     streamerType = StreamerConfig::Type::ReStreamer;
                 else if(0 == strcmp(type, "onvif"))
                     streamerType = StreamerConfig::Type::ONVIFReStreamer;
@@ -210,23 +219,32 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     streamerType = StreamerConfig::Type::Test;
                 else if(0 == strcmp(type, "record"))
                     streamerType = StreamerConfig::Type::Record;
+                else if(0 == strcmp(type, "player"))
+                    streamerType = StreamerConfig::Type::FilePlayer;
                 else {
                     Log()->warn("Unknown streamer type. Streamer skipped.");
                     break;
                 }
 
-                const char* uri = "";
-                if(streamerType != StreamerConfig::Type::Record ) {
-                    if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "uri", &uri) &&
-                       CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "url", &uri))
-                    {
-                        Log()->warn("Missing streamer uri. Streamer skipped.");
-                        break;
-                    }
+                if(streamerType != StreamerConfig::Type::Record &&
+                   streamerType != StreamerConfig::Type::FilePlayer &&
+                   !uri)
+                {
+                    Log()->warn("Missing streamer uri. Streamer skipped.");
+                    break;
+                }
+                if(streamerType == StreamerConfig::Type::FilePlayer && !dir) {
+                    Log()->warn("Missing player source dir. Streamer skipped.");
+                    break;
                 }
 
                 const char* recordingsDir = nullptr;
                 config_setting_lookup_string(streamerConfig, "recordings-dir", &recordingsDir);
+
+                if(streamerType == StreamerConfig::Type::Record && !recordingsDir) {
+                    Log()->warn("Missing recordings target dir. Streamer skipped.");
+                    break;
+                }
 
                 int recordingsDirMaxSize = 1024;
                 config_setting_lookup_int(streamerConfig, "recordings-dir-max-size", &recordingsDirMaxSize);
@@ -243,7 +261,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
 
                 std::string escapedName(escapedNamePtr.get());
                 std::optional<RecordConfig> recordConfig;
-                if(recordingsDir) {
+                if(streamerType == StreamerConfig::Type::Record) {
                     recordConfig.emplace(
                         !basePath || g_path_is_absolute(recordingsDir) != FALSE ?
                             std::filesystem::path(recordingsDir) / escapedName :
@@ -252,12 +270,22 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                         recordingChunkSize * (1ull << 20));
                 }
 
+                std::string streamerUri;
+                if(streamerType == StreamerConfig::Type::FilePlayer) {
+                    streamerUri =
+                        (!basePath || g_path_is_absolute(dir) != FALSE ?
+                            std::filesystem::path(GCharPtr(g_canonicalize_filename(dir, nullptr)).get()) :
+                            std::filesystem::path(basePath) / dir).string();
+                } else if(uri){
+                    streamerUri = uri;
+                }
+
                 loadedConfig.streamers.emplace(
                     escapedName,
                     StreamerConfig {
                         restream != FALSE,
                         streamerType,
-                        uri,
+                        streamerUri,
                         username ?
                             std::make_optional<std::string>(username) :
                             std::optional<std::string>(),

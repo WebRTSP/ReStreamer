@@ -39,6 +39,38 @@ Session::~Session() {
     }
 }
 
+bool Session::playEnabled(const std::string& uri) noexcept
+{
+    auto it = _config->streamers.find(uri);
+    bool isSubstream = false;
+
+    if(it == _config->streamers.end()) {
+        const std::string::size_type separatorPos = uri.find_first_of(rtsp::UriSeparator);
+        if(separatorPos == std::string::npos) {
+            return false;
+        }
+
+        const std::string streamerName = uri.substr(0, separatorPos);
+        it = _config->streamers.find(streamerName);
+        isSubstream = true;
+    }
+
+    if(it == _config->streamers.end())
+        return false;
+
+    const StreamerConfig& streamerConfig = it->second;
+
+    if(streamerConfig.type == StreamerConfig::Type::Record) {
+        return streamerConfig.restream;
+    }
+
+    if(streamerConfig.type == StreamerConfig::Type::FilePlayer) {
+        return isSubstream;
+    }
+
+    return true;
+}
+
 bool Session::recordEnabled(const std::string& uri) noexcept
 {
     auto it = _config->streamers.find(uri);
@@ -109,27 +141,61 @@ bool Session::authorize(
     return ServerSession::authorize(requestPtr, authCookie);
 }
 
+bool Session::listEnabled(const std::string& uri) noexcept
+{
+    if(uri == "*")
+        return true;
+
+    auto streamerIt = _config->streamers.find(uri);
+    if(streamerIt == _config->streamers.end())
+        return false;
+
+    if(streamerIt->second.type == StreamerConfig::Type::FilePlayer)
+        return true;
+
+    return false;
+}
+
 bool Session::onListRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    if(_sharedData->listCache.empty()) {
-        if(_config->streamers.empty())
-            _sharedData->listCache = "\r\n";
-        else {
-            for(const auto& pair: _config->streamers) {
-                if(!pair.second.restream) continue;
+    const std::string& uri = requestPtr->uri;
 
-                _sharedData->listCache += pair.first;
-                _sharedData->listCache += ": ";
-                _sharedData->listCache += pair.second.description;
-                _sharedData->listCache += + "\r\n";
-            }
-        }
+    if(!listEnabled(uri))
+        return false;
+
+    if(uri == "*") {
+        sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->listCache);
+
+        return true;
     }
 
-    sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->listCache);
+    auto streamerIt = _config->streamers.find(uri);
+    if(streamerIt == _config->streamers.end())
+        return false;
 
-    return true;
+    if(streamerIt->second.type != StreamerConfig::Type::FilePlayer) {
+        sendOkResponse(
+            requestPtr->cseq,
+            "text/parameters",
+            fmt::format("{}: {}\r\n", uri, streamerIt->second.description));
+        return true;
+    }
+
+    auto listIt = _sharedData->mountpointsListsCache.find(uri);
+    if(listIt == _sharedData->mountpointsListsCache.end()) {
+        sendOkResponse(
+            requestPtr->cseq,
+            "text/parameters",
+            "\r\n");
+        return true;
+    } else {
+        sendOkResponse(
+            requestPtr->cseq,
+            "text/parameters",
+            listIt->second);
+        return true;
+    }
 }
 
 bool Session::onSubscribeRequest(

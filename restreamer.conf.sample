@@ -75,6 +75,12 @@ streamers: (
 #    recording-chunk-size: 100 // Mb
 #  },
 #  {
+#    name: "Recordings",
+#    type: "player",
+#    dir: "recordings",
+#    force-h264-profile-level-id: "42c015"
+#  },
+#  {
 #    name: "ONVIF",
 #    type: "onvif",
 #    url: "http://some.onvif.source.org/",
