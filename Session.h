@@ -43,7 +43,7 @@ public:
     ~Session();
 
 protected:
-    bool listEnabled() noexcept override { return true; }
+    bool listEnabled(const std::string& /*uri*/) noexcept override { return true; }
     bool recordEnabled(const std::string& uri) noexcept override;
     bool subscribeEnabled(const std::string& uri) noexcept override;
     bool authorizeRecord(const std::unique_ptr<rtsp::Request>&) noexcept;
