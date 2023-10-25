@@ -40,6 +40,8 @@ struct StreamerConfig
     bool restream;
     Type type;
     std::string uri;
+    std::optional<std::string> username;
+    std::optional<std::string> password;
     std::string recordToken;
     std::string description;
     std::string forceH264ProfileLevelId;

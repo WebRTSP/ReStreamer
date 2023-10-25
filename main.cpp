@@ -1,3 +1,4 @@
+#include <optional>
 #include <deque>
 
 #include <glib.h>
@@ -194,6 +195,12 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 const char* forceH264ProfileLevelId = nullptr;
                 config_setting_lookup_string(streamerConfig, "force-h264-profile-level-id", &forceH264ProfileLevelId);
 
+                const char* username = nullptr;
+                config_setting_lookup_string(streamerConfig, "username", &username);
+
+                const char* password = nullptr;
+                config_setting_lookup_string(streamerConfig, "password", &password);
+
                 StreamerConfig::Type streamerType;
                 if(nullptr == type || 0 == strcmp(type, "restreamer"))
                     streamerType = StreamerConfig::Type::ReStreamer;
@@ -251,6 +258,12 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                         restream != FALSE,
                         streamerType,
                         uri,
+                        username ?
+                            std::make_optional<std::string>(username) :
+                            std::optional<std::string>(),
+                        password ?
+                            std::make_optional<std::string>(password) :
+                            std::optional<std::string>(),
                         recordToken,
                         description ?
                             std::string(description) :

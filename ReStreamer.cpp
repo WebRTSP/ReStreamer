@@ -307,7 +307,9 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
                 pair.first,
                 std::make_unique<ONVIFReStreamer>(
                     pair.second.uri,
-                    pair.second.forceH264ProfileLevelId));
+                    pair.second.forceH264ProfileLevelId,
+                    pair.second.username,
+                    pair.second.password));
             break;
         case StreamerConfig::Type::Record:
             if(pair.second.recordConfig) {

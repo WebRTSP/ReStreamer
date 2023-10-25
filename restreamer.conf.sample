@@ -79,6 +79,8 @@ streamers: (
 #    type: "onvif",
 #    url: "http://some.onvif.source.org/",
 #    description: "ONVIF source",
+#    username: "user",
+#    password: "pass",
 #    force-h264-profile-level-id: "42c015"
   }
 )
