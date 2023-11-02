@@ -61,11 +61,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             loadedHttpConfig.wwwRoot = wwwRoot;
         }
 
-        const char* host = nullptr;
-        if(CONFIG_TRUE == config_lookup_string(&config, "host", &host)) {
-            loadedConfig.serverName = host;
-        }
-
         int wsPort= 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "ws-port", &wsPort)) {
             loadedConfig.port = static_cast<unsigned short>(wsPort);
@@ -81,37 +76,11 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             loadedConfig.bindToLoopbackOnly = loopbackOnly != false;
         }
 
-        int wssPort= 0;
-        if(CONFIG_TRUE == config_lookup_int(&config, "wss-port", &wssPort)) {
-            loadedConfig.securePort = static_cast<unsigned short>(wssPort);
-        } else if(CONFIG_TRUE == config_lookup_int(&config, "secure-port", &wssPort)) { // for backward compatibility
-            loadedConfig.securePort = static_cast<unsigned short>(wssPort);
-        } else {
-            loadedConfig.securePort = 0;
-        }
-
         int httpPort = 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "http-port", &httpPort)) {
             loadedHttpConfig.port = static_cast<unsigned short>(httpPort);
         } else {
             loadedHttpConfig.port = 0;
-        }
-        int httpsPort = 0;
-        if(CONFIG_TRUE == config_lookup_int(&config, "https-port", &httpsPort)) {
-            loadedHttpConfig.securePort = static_cast<unsigned short>(httpsPort);
-        } else {
-            loadedHttpConfig.securePort = 0;
-        }
-
-        const char* certificate = nullptr;
-        if(CONFIG_TRUE == config_lookup_string(&config, "certificate", &certificate)) {
-            loadedHttpConfig.certificate = FullPath(configDir, certificate);
-            loadedConfig.certificate = loadedHttpConfig.certificate;
-        }
-        const char* privateKey = nullptr;
-        if(CONFIG_TRUE == config_lookup_string(&config, "key", &privateKey)) {
-            loadedHttpConfig.key = FullPath(configDir, privateKey);
-            loadedConfig.key = loadedHttpConfig.key;
         }
 
         config_setting_t* stunServerConfig = config_lookup(&config, "stun");
@@ -340,15 +309,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
 
     bool success = true;
 
-    if(!loadedConfig.port && !loadedConfig.securePort) {
-        Log()->error("At least \"ws-port\" or \"wss-port\" config value should be specified");
+    if(!loadedConfig.port) {
+        Log()->error("\"ws-port\" config value should be specified");
         success = false;
-    }
-
-    if(loadedHttpConfig.securePort && (loadedHttpConfig.certificate.empty() || loadedHttpConfig.key.empty())) {
-        Log()->error("HTTPS acces requires \"certificate\" and \"key\" config keys to be specified.");
-    } else if(loadedConfig.securePort && (loadedConfig.certificate.empty() || loadedConfig.key.empty())) {
-        Log()->error("WSS acces requires \"certificate\" and \"key\" config keys to be specified.");
     }
 
     if(success) {

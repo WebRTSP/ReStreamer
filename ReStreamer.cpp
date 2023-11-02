@@ -615,7 +615,7 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
             std::placeholders::_2));
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
-    if(httpConfig.port || (httpConfig.securePort && !httpConfig.certificate.empty() && !httpConfig.key.empty())) {
+    if(httpConfig.port) {
         httpServerPtr =
             std::make_unique<http::MicroServer>(
                 httpConfig,
