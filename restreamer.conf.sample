@@ -58,6 +58,14 @@ streamers: (
     force-h264-profile-level-id: "42c015"
 #  },
 #  {
+#    name: "Some name",
+#    type: "restreamer", // optional
+#    url: "rtsp://some.dns.or.ip/",
+#    description: "Some description",
+#    force-h264-profile-level-id: "42c015", //optional
+#    restream: true // optional
+#  },
+#  {
 #    name: "Record",
 #    type: "record",
 #    restream: true,
