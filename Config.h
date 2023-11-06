@@ -57,6 +57,6 @@ struct Config : public signalling::Config
     typedef std::deque<std::string> IceServers;
     IceServers iceServers;
 
-    std::map<std::string, StreamerConfig> streamers;
+    std::map<std::string, StreamerConfig> streamers; // escaped streamer name -> StreamerConfig
     bool authRequired = true;
 };
