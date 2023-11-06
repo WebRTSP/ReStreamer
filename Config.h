@@ -38,7 +38,14 @@ struct StreamerConfig
         FilePlayer,
     };
 
+    enum class Visibility {
+        Auto, // Protected if authentication is required, Public if not.
+        Public,
+        Protected, // Accessible only for authenticated users
+    };
+
     bool restream;
+    Visibility visibility;
     Type type;
     std::string uri;
     std::optional<std::string> username;

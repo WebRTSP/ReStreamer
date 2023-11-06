@@ -64,6 +64,11 @@ streamers: (
 #    description: "Some description",
 #    force-h264-profile-level-id: "42c015", //optional
 #    restream: true // optional
+//   if `public` is omitted - restreamer will be publicly accessible if there is no `users` defined below,
+//                            otherwise it will be accessible only with auth;
+//   if it's true - restreamer will be always accessable without auth;
+//   if it's false - restreamer will be NOT accessable without auth;
+#    public: true // optional
 #  },
 #  {
 #    name: "Record",

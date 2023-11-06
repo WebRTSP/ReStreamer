@@ -39,13 +39,18 @@ enum {
 
 const auto Log = ReStreamerLog;
 
-std::string GenerateList(const Config& config) {
+std::string GenerateList(const Config& config, bool addPublicOnly) {
     std::string list;
     if(config.streamers.empty()) {
         list = "\r\n";
     } else {
         for(const auto& pair: config.streamers) {
-            if(!pair.second.restream) continue;
+            typedef StreamerConfig::Visibility Visibility;
+            const bool isPublic =
+                (pair.second.visibility == Visibility::Auto && !config.authRequired) ||
+                pair.second.visibility == Visibility::Public;
+
+            if(!pair.second.restream || (addPublicOnly && !isPublic)) continue;
 
             list += pair.first;
             list += ": ";
@@ -523,7 +528,7 @@ int ReStreamerMain(const http::Config& httpConfig, const Config& config)
     GMainLoopPtr loopPtr(g_main_loop_new(context, FALSE));
     GMainLoop* loop = loopPtr.get();
 
-    Session::SharedData sessionsSharedData { GenerateList(config) };
+    Session::SharedData sessionsSharedData { GenerateList(config, true), GenerateList(config, false) };
 
     std::deque<RecordConfig> cleanupList;
     std::deque<std::pair<std::string, std::string>> monitorList;

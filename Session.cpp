@@ -111,6 +111,23 @@ bool Session::authorizeRecord(const std::unique_ptr<rtsp::Request>& requestPtr) 
     return authPair.second == it->second.recordToken;
 }
 
+bool Session::isValidCookie(const std::optional<std::string>& authCookie) noexcept
+{
+    if(!authCookie)
+        return false;
+
+    auto it = _sharedData->authTokens.find(authCookie.value());
+    if(it == _sharedData->authTokens.end())
+        return false;
+
+    const AuthTokenData& tokenData = it->second;
+
+    if(tokenData.expiresAt < std::chrono::steady_clock::now())
+        return false;
+
+    return true;
+}
+
 bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     switch(requestPtr->method) {
@@ -118,20 +135,21 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
         return authorizeRecord(requestPtr);
     case rtsp::Method::SUBSCRIBE:
     case rtsp::Method::DESCRIBE:
-        if(_config->authRequired) {
-            if(!authCookie())
-                return false;
+        bool authRequired = true;
+        if(requestPtr->uri == rtsp::WildcardUri) {
+            authRequired = _config->authRequired;
+        } else {
+            const auto& [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
+            auto streamerIt = _config->streamers.find(streamerName);
+            typedef StreamerConfig::Visibility Visibility;
+            authRequired =
+                streamerIt != _config->streamers.end() &&
+                (streamerIt->second.visibility == Visibility::Protected ||
+                    (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
+        }
 
-            auto it = _sharedData->authTokens.find(authCookie().value());
-            if(it == _sharedData->authTokens.end())
-                return false;
-
-            const AuthTokenData& tokenData = it->second;
-
-            if(tokenData.expiresAt < std::chrono::steady_clock::now())
-                return false;
-
-            return true;
+        if(authRequired) {
+            return isValidCookie(authCookie());
         }
         break;
     }
@@ -163,7 +181,11 @@ bool Session::onListRequest(
         return false;
 
     if(uri == "*") {
-        sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->listCache);
+        if(isValidCookie(authCookie())) {
+            sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->protectedListCache);
+        } else {
+            sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->publicListCache);
+        }
 
         return true;
     }

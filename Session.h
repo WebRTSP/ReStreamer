@@ -22,7 +22,8 @@ public:
     };
 
     struct SharedData {
-        const std::string listCache;
+        const std::string publicListCache;
+        const std::string protectedListCache;
         std::unordered_map<std::string, const AuthTokenData> authTokens;
         std::map<std::string, RecordMountpointData> recordMountpointsData;
         std::map<std::string, std::string> mountpointsListsCache;
@@ -49,6 +50,7 @@ protected:
     bool recordEnabled(const std::string& uri) noexcept override;
     bool subscribeEnabled(const std::string& uri) noexcept override;
     bool authorizeRecord(const std::unique_ptr<rtsp::Request>&) noexcept;
+    bool isValidCookie(const std::optional<std::string>& authCookie) noexcept;
     bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
 
     bool onListRequest(

@@ -1,5 +1,6 @@
 #include <optional>
 #include <deque>
+#include <set>
 
 #include <glib.h>
 
@@ -32,6 +33,10 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     const std::deque<std::string> configDirs = ::ConfigDirs();
     if(configDirs.empty())
         return false;
+
+    const std::string rootPath = "/";
+    bool hasPublicStreamers = false;
+    std::set<std::string> autoVisibilityStreamers;
 
     http::Config loadedHttpConfig = *httpConfig;
     Config loadedConfig = *config;
@@ -158,6 +163,19 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 const char* type = nullptr;
                 config_setting_lookup_string(streamerConfig, "type", &type);
 
+                StreamerConfig::Visibility visibility = StreamerConfig::Visibility::Auto;
+                int isPublic = false;
+                if(CONFIG_TRUE == config_setting_lookup_bool(streamerConfig, "public", &isPublic)) {
+                    if(isPublic != FALSE) {
+                        hasPublicStreamers = true;
+                        visibility = StreamerConfig::Visibility::Public;
+                    } else {
+                        visibility = StreamerConfig::Visibility::Protected;
+                    }
+                } else {
+                    autoVisibilityStreamers.emplace(name);
+                }
+
                 const char* description = nullptr;
                 config_setting_lookup_string(streamerConfig, "description", &description);
 
@@ -253,6 +271,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     escapedName,
                     StreamerConfig {
                         restream != FALSE,
+                        visibility,
                         streamerType,
                         streamerUri,
                         username ?
@@ -269,6 +288,13 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                             std::string(forceH264ProfileLevelId) :
                             std::string(),
                         recordConfig });
+
+
+                if(visibility != StreamerConfig::Visibility::Auto) {
+                    loadedHttpConfig.indexPaths.emplace(
+                        rootPath + name,
+                        visibility == StreamerConfig::Visibility::Protected);
+                }
             }
         }
 
@@ -306,6 +332,11 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     }
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();
+
+    loadedHttpConfig.indexPaths.emplace(rootPath, loadedConfig.authRequired && !hasPublicStreamers);
+    for(const std::string& streamerName: autoVisibilityStreamers) {
+        loadedHttpConfig.indexPaths.emplace(rootPath + streamerName, loadedConfig.authRequired);
+    }
 
     bool success = true;
 
