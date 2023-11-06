@@ -13,6 +13,8 @@
 
 #include "Http/HttpMicroServer.h"
 
+#include "RtspParser/RtspParser.h"
+
 #include "Signalling/WsServer.h"
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
@@ -419,13 +421,7 @@ CreatePeer(
     MountPoints* mountPoints,
     const std::string& uri)
 {
-    const std::string::size_type separatorPos = uri.find_first_of(rtsp::UriSeparator);
-    const std::string streamerName = uri.substr(0, separatorPos);
-    const std::string substreamName =
-        separatorPos == std::string::npos ?
-            std::string() :
-            uri.substr(separatorPos + 1);
-
+    const auto& [streamerName, substreamName] = rtsp::SplitUri(uri);
 
     auto configStreamerIt = config->streamers.find(streamerName);
     if(configStreamerIt == config->streamers.end() || !configStreamerIt->second.restream)

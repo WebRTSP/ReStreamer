@@ -49,9 +49,7 @@ protected:
     bool recordEnabled(const std::string& uri) noexcept override;
     bool subscribeEnabled(const std::string& uri) noexcept override;
     bool authorizeRecord(const std::unique_ptr<rtsp::Request>&) noexcept;
-    bool authorize(
-        const std::unique_ptr<rtsp::Request>&,
-        const std::optional<std::string>& authCookie) noexcept override;
+    bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
 
     bool onListRequest(
         std::unique_ptr<rtsp::Request>&) noexcept override;

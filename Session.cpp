@@ -111,9 +111,7 @@ bool Session::authorizeRecord(const std::unique_ptr<rtsp::Request>& requestPtr) 
     return authPair.second == it->second.recordToken;
 }
 
-bool Session::authorize(
-    const std::unique_ptr<rtsp::Request>& requestPtr,
-    const std::optional<std::string>& authCookie) noexcept
+bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     switch(requestPtr->method) {
     case rtsp::Method::RECORD:
@@ -121,10 +119,10 @@ bool Session::authorize(
     case rtsp::Method::SUBSCRIBE:
     case rtsp::Method::DESCRIBE:
         if(_config->authRequired) {
-            if(!authCookie)
+            if(!authCookie())
                 return false;
 
-            auto it = _sharedData->authTokens.find(authCookie.value());
+            auto it = _sharedData->authTokens.find(authCookie().value());
             if(it == _sharedData->authTokens.end())
                 return false;
 
@@ -138,7 +136,7 @@ bool Session::authorize(
         break;
     }
 
-    return ServerSession::authorize(requestPtr, authCookie);
+    return ServerSession::authorize(requestPtr);
 }
 
 bool Session::listEnabled(const std::string& uri) noexcept
