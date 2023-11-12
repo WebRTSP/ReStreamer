@@ -12,31 +12,36 @@ streamers: (
     name: "Price Center Plaza",
     url: "rtsp://132.239.12.145:554/axis-media/media.amp",
     description: "rtsp://132.239.12.145:554/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
   },
   {
     name: "Konský Grúň",
     url: "rtsp://stream.tmr.sk:1935/tmr/STREAM17.stream",
     description: "rtsp://stream.tmr.sk:1935/tmr/STREAM17.stream",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
   },
   {
     name: "Štrbské pleso",
     url: "rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream",
     description: "rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
   },
   {
     name: "Bedford Hills",
     url: "rtsp://73.114.177.111/axis-media/media.amp",
     description: "rtsp://73.114.177.111/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
   },
   {
     name: "Norwich",
     url: "rtsp://37.157.51.30/axis-media/media.amp",
     description: "rtsp://37.157.51.30/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
   },
   {
     name: "Montana",
@@ -49,13 +54,15 @@ streamers: (
     name: "Western Cape",
     url: "rtsp://196.21.92.82/axis-media/media.amp",
     description: "rtsp://196.21.92.82/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
   },
   {
     name: "Nordland",
     url: "rtsp://77.110.228.219/axis-media/media.amp",
     description: "rtsp://77.110.228.219/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015"
+    force-h264-profile-level-id: "42c015",
+    public: true
 #  },
 #  {
 #    name: "Some name",
