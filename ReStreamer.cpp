@@ -312,10 +312,12 @@ void FilesDirChanged(
             g_autoptr(GFileInfo) fileInfo =
                 g_file_query_info(
                     file,
-                    G_FILE_ATTRIBUTE_TIME_CREATED,
+                    G_FILE_ATTRIBUTE_STANDARD_TYPE "," G_FILE_ATTRIBUTE_TIME_CREATED,
                     G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                     NULL,
                     NULL);
+            if(g_file_info_get_file_type(fileInfo) != G_FILE_TYPE_REGULAR)
+                break;
 
             const std::string& escapedStreamerName = context.streamer;
 
