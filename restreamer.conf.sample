@@ -80,7 +80,7 @@ streamers: (
 #  {
 #    name: "Record",
 #    type: "record",
-#    restream: true,
+#    restream: false,
 #    record-token: "token",
 #    description: "Restreamed incoming RECORD stream"
 //   absolute or relative (based on %SNAP_COMMON% in case of snap package, or current dir in other cases) path
@@ -93,7 +93,8 @@ streamers: (
 #    name: "Recordings",
 #    type: "player",
 #    dir: "recordings/Record",
-#    force-h264-profile-level-id: "42c015"
+#    force-h264-profile-level-id: "42c015",
+#    public: false
 #  },
 #  {
 #    name: "ONVIF",
