@@ -92,7 +92,7 @@ streamers: (
 #  {
 #    name: "Recordings",
 #    type: "player",
-#    dir: "recordings",
+#    dir: "recordings/Record",
 #    force-h264-profile-level-id: "42c015"
 #  },
 #  {
