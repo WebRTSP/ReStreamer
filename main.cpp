@@ -241,18 +241,13 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 config_setting_lookup_int(streamerConfig, "recording-chunk-size", &recordingChunkSize);
                 if(recordingChunkSize < 0) recordingChunkSize = 0;
 
-                CharPtr escapedNamePtr(
-                    g_uri_escape_string(name, nullptr, false));
-                if(!escapedNamePtr)
-                    break; // insufficient memory?
-
-                std::string escapedName(escapedNamePtr.get());
                 std::optional<RecordConfig> recordConfig;
                 if(streamerType == StreamerConfig::Type::Record) {
+                    g_autofree gchar* recorderDir = g_uri_escape_string(name, " ", false);
                     recordConfig.emplace(
                         !basePath || g_path_is_absolute(recordingsDir) != FALSE ?
-                            std::filesystem::path(recordingsDir) / escapedName :
-                            std::filesystem::path(basePath) / recordingsDir / escapedName,
+                            std::filesystem::path(recordingsDir) / recorderDir :
+                            std::filesystem::path(basePath) / recordingsDir / recorderDir,
                         recordingsDirMaxSize * (1ull << 20),
                         recordingChunkSize * (1ull << 20));
                 }
@@ -267,6 +262,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     streamerUri = uri;
                 }
 
+                g_autofree gchar* escapedName = g_uri_escape_string(name, nullptr, false);
                 loadedConfig.streamers.emplace(
                     escapedName,
                     StreamerConfig {
