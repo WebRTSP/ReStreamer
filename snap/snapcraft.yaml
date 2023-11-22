@@ -67,6 +67,7 @@ parts:
       - -Dlibnice:gstreamer=enabled
       - -Dlibnice:crypto-library=auto
       - -Dgst-plugins-base:playback=enabled
+      - -Dgst-plugins-base:typefind=enabled
       - -Dgst-plugins-good:rtsp=enabled
       - -Dgst-plugins-good:rtpmanager=enabled
       - -Dgst-plugins-good:udp=enabled
