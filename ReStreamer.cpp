@@ -436,7 +436,10 @@ CreatePeer(
 
     const StreamerConfig& streamerConfig = configStreamerIt->second;
     if(configStreamerIt->second.type == StreamerConfig::Type::FilePlayer) {
-        GCharPtr fullPathPtr(g_build_filename(streamerConfig.uri.c_str(), substreamName.c_str(), nullptr));
+        g_autofree gchar* unEscapedSubstreamName = g_uri_unescape_string(substreamName.c_str(), nullptr);
+        g_autofree gchar* reEscapedSubstreamName = g_uri_escape_string(unEscapedSubstreamName, " ()", false);
+
+        GCharPtr fullPathPtr(g_build_filename(streamerConfig.uri.c_str(), reEscapedSubstreamName, nullptr));
         GCharPtr safePathPtr(g_canonicalize_filename(fullPathPtr.get(), nullptr));
         if(!g_str_has_prefix(safePathPtr.get(), streamerConfig.uri.c_str())) {
             Log()->error("Try to escape from file player dir detected: {}\n", uri);
