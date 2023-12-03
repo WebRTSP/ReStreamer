@@ -234,20 +234,20 @@ bool Session::onSubscribeRequest(
     RecordMountpointData& data = _sharedData->recordMountpointsData[requestPtr->uri];
     auto selfIt = data.subscriptions.find(this);
     if(selfIt != data.subscriptions.end()) {
-        Log()->error("Second try to subscribe to the same streamer \"{}\"", requestPtr->uri);
+        Log()->error("[{}] Second try to subscribe to the same streamer \"{}\"", sessionLogId.c_str(), requestPtr->uri);
         return false;
     }
 
     rtsp::SessionId mediaSessionId = nextSessionId();
     if(!data.recording) {
-        Log()->info("Streamer \"{}\" not active yet. Subscribing...", requestPtr->uri);
+        Log()->info("[{}] Streamer \"{}\" not active yet. Subscribing...", sessionLogId.c_str(), requestPtr->uri);
         data.subscriptions.emplace(this, mediaSessionId);
     }
 
     sendOkResponse(requestPtr->cseq, mediaSessionId);
 
     if(data.recording) {
-        Log()->info("Streamer \"{}\" already active. Starting record to client...", requestPtr->uri);
+        Log()->info("[{}] Streamer \"{}\" already active. Starting record to client...", sessionLogId.c_str(), requestPtr->uri);
         startRecordToClient(requestPtr->uri, mediaSessionId);
     }
 
