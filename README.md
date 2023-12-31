@@ -47,7 +47,8 @@ streamers: (
 5. Finally with above config recordigns will be available in `/var/snap/rtsp-to-webrtsp/common/DVR/`;
 
 ### How enable TLS with Let's Encrypt certificate (highly recommended)
-* Run: `./enableTLS.sh root@host_where_snap_installed.com:22 you@gmail.com`;
+* Run: `./enableTLS.sh root@your_server_ip_or_dns.com:22 you@gmail.com`;
+* Open in your browser: `https://your_server_ip_or_dns:5443/`;
 
 ### Troubleshooting
 * To see application logs in realtime run: `sudo snap logs rtsp-to-webrtsp -f`;
