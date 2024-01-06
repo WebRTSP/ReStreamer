@@ -388,5 +388,5 @@ int main(int argc, char *argv[])
 
     LibGst libGst;
 
-    return ReStreamerMain(httpConfig, config);
+    return ReStreamerMain(httpConfig, config, true);
 }

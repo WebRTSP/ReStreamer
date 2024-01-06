@@ -5,4 +5,7 @@
 #include "Config.h"
 
 
-int ReStreamerMain(const http::Config&, const Config&);
+int ReStreamerMain(
+    const http::Config&,
+    const Config&,
+    bool useGlobalDefaultContext);

@@ -92,7 +92,8 @@ void ScheduleAuthTokensCleanup(Session::SharedData* sessionsSharedData) {
             CleanupAuthTokens(sessionsSharedData);
             return false;
         }, sessionsSharedData, nullptr);
-    g_source_attach(timeoutSource, g_main_context_get_thread_default());
+    GMainContext* threadContext = g_main_context_get_thread_default();
+    g_source_attach(timeoutSource, threadContext ? threadContext : g_main_context_default());
 }
 
 struct RecordingsMonitorContext {
@@ -524,11 +525,19 @@ static void OnRecorderDisconnected(Session::SharedData* sharedData, const std::s
     assert(data.subscriptions.empty());
 }
 
-int ReStreamerMain(const http::Config& httpConfig, const Config& config)
+int ReStreamerMain(
+    const http::Config& httpConfig,
+    const Config& config,
+    bool useGlobalDefaultContext)
 {
-    GMainContextPtr contextPtr(g_main_context_new());
+    GMainContextPtr contextPtr(
+        useGlobalDefaultContext ?
+            g_main_context_ref(g_main_context_default()) :
+            g_main_context_new());
     GMainContext* context = contextPtr.get();
-    g_main_context_push_thread_default(context);
+    if(!useGlobalDefaultContext) {
+        g_main_context_push_thread_default(context);
+    }
 
     GMainLoopPtr loopPtr(g_main_loop_new(context, FALSE));
     GMainLoop* loop = loopPtr.get();
