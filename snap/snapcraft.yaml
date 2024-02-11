@@ -3,7 +3,7 @@ base: core22
 summary: Media URLs ReStreamer (over WebRTC)
 adopt-info: restreamer
 description: |
-  Intended to help play RTSP streams from IP Cams (and some other URL types) in browsers.
+  Intended to help play RTSP streams from IP Cams (and some other URL types) in browsers. Also it can be used as Cloud DVR (https://github.com/WebRTSP/ReStreamer#how-to-use-it-as-cloud-dvr-for-ip-cam-not-accessible-directly)
 
   To try, install snap and open http://localhost:5080 in your browser.
 
