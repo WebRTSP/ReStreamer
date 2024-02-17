@@ -176,8 +176,12 @@ bool Session::onListRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     const std::string& uri = requestPtr->uri;
+    const std::string& contentType = rtsp::RequestContentType(*requestPtr);
 
     if(!listEnabled(uri))
+        return false;
+
+    if(!contentType.empty() || !requestPtr->body.empty())
         return false;
 
     if(uri == "*") {
