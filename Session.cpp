@@ -198,28 +198,24 @@ bool Session::onListRequest(
     if(streamerIt == _config->streamers.end())
         return false;
 
-    if(streamerIt->second.type != StreamerConfig::Type::FilePlayer) {
-        sendOkResponse(
-            requestPtr->cseq,
-            "text/parameters",
-            fmt::format("{}: {}\r\n", uri, streamerIt->second.description));
+    if(streamerIt->second.type == StreamerConfig::Type::FilePlayer) {
+        auto listIt = _sharedData->mountpointsListsCache.find(uri);
+        if(listIt == _sharedData->mountpointsListsCache.end()) {
+            sendOkResponse(
+                requestPtr->cseq,
+                "text/parameters",
+                "\r\n");
+        } else {
+            sendOkResponse(
+                requestPtr->cseq,
+                "text/parameters",
+                listIt->second);
+        }
+
         return true;
     }
 
-    auto listIt = _sharedData->mountpointsListsCache.find(uri);
-    if(listIt == _sharedData->mountpointsListsCache.end()) {
-        sendOkResponse(
-            requestPtr->cseq,
-            "text/parameters",
-            "\r\n");
-        return true;
-    } else {
-        sendOkResponse(
-            requestPtr->cseq,
-            "text/parameters",
-            listIt->second);
-        return true;
-    }
+    return false;
 }
 
 bool Session::onSubscribeRequest(
