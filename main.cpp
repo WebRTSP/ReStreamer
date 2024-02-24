@@ -66,7 +66,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             loadedHttpConfig.wwwRoot = wwwRoot;
         }
 
-        int wsPort= 0;
+        int wsPort = 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "ws-port", &wsPort)) {
             loadedConfig.port = static_cast<unsigned short>(wsPort);
         } else if(CONFIG_TRUE == config_lookup_int(&config, "port", &wsPort)) { // for backward compatibility
