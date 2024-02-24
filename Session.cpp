@@ -15,7 +15,7 @@ Session::Session(
     const CreatePeer& createPeer,
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
-    ServerSession(config->iceServers, createPeer,sendRequest, sendResponse),
+    ServerSession(config->iceServers, createPeer, sendRequest, sendResponse),
     _config(config), _sharedData(sharedData)
 {
 }
