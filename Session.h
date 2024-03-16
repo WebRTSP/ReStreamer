@@ -6,28 +6,15 @@
 #include "Signalling/ServerSession.h"
 
 #include "Config.h"
+#include "SessionsSharedData.h"
 
 
 class Session : public ServerSession
 {
 public:
-    struct AuthTokenData {
-        std::chrono::steady_clock::time_point expiresAt;
-        // FIXME! add allowed IP
-    };
-
-    struct RecordMountpointData {
-        bool recording = false;
-        std::unordered_map<ServerSession*, rtsp::SessionId> subscriptions;
-    };
-
-    struct SharedData {
-        const std::string publicListCache;
-        const std::string protectedListCache;
-        std::unordered_map<std::string, const AuthTokenData> authTokens;
-        std::map<std::string, RecordMountpointData> recordMountpointsData;
-        std::map<std::string, std::string> mountpointsListsCache;
-    };
+    typedef SessionAuthTokenData AuthTokenData;
+    typedef RecordMountpointData RecordMountpointData;
+    typedef SessionsSharedData SharedData;
 
     Session(
         const Config*,
