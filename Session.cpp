@@ -186,9 +186,9 @@ bool Session::onListRequest(
 
     if(uri == "*") {
         if(isValidCookie(authCookie())) {
-            sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->protectedListCache);
+            sendOkResponse(requestPtr->cseq, rtsp::TextParametersContentType, _sharedData->protectedListCache);
         } else {
-            sendOkResponse(requestPtr->cseq, "text/parameters", _sharedData->publicListCache);
+            sendOkResponse(requestPtr->cseq, rtsp::TextParametersContentType, _sharedData->publicListCache);
         }
 
         return true;
@@ -203,12 +203,12 @@ bool Session::onListRequest(
         if(listIt == _sharedData->mountpointsListsCache.end()) {
             sendOkResponse(
                 requestPtr->cseq,
-                "text/parameters",
+                rtsp::TextParametersContentType,
                 "\r\n");
         } else {
             sendOkResponse(
                 requestPtr->cseq,
-                "text/parameters",
+                rtsp::TextParametersContentType,
                 listIt->second);
         }
 
