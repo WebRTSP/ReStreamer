@@ -7,8 +7,25 @@
 
 #include <spdlog/common.h>
 
+#include "Client/Config.h"
 #include "Signalling/Config.h"
 
+
+struct SignallingServer : public client::Config
+{
+    SignallingServer(
+        const std::string& server,
+        const std::string& uri,
+        const std::string& token)
+        : uri(uri), token(token)
+    {
+        this->server = server;
+        serverPort = signalling::Config().port;
+    }
+
+    std::string uri;
+    std::string token;
+};
 
 struct RecordConfig
 {
@@ -36,6 +53,7 @@ struct StreamerConfig
         ONVIFReStreamer,
         Record,
         FilePlayer,
+        Proxy
     };
 
     enum class Visibility {
@@ -50,7 +68,7 @@ struct StreamerConfig
     std::string uri;
     std::optional<std::string> username;
     std::optional<std::string> password;
-    std::string recordToken;
+    std::string remoteAgentToken;
     std::string description;
     std::string forceH264ProfileLevelId;
     std::optional<RecordConfig> recordConfig;
@@ -63,6 +81,8 @@ struct Config : public signalling::Config
 
     typedef std::deque<std::string> IceServers;
     IceServers iceServers;
+
+    std::optional<SignallingServer> signallingServer;
 
     std::map<std::string, StreamerConfig> streamers; // escaped streamer name -> StreamerConfig
     bool authRequired = true;

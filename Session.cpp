@@ -9,6 +9,18 @@
 
 static const auto Log = ReStreamerLog;
 
+class Session::SessionHandle
+{
+public:
+    SessionHandle(Session* owner): _owner(owner) {}
+
+    Session* operator -> () { return _owner; }
+    const Session* operator -> () const { return _owner; }
+
+private:
+    Session* _owner;
+};
+
 Session::Session(
     const Config* config,
     SharedData* sharedData,
@@ -16,7 +28,7 @@ Session::Session(
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
     ServerSession(config->iceServers, createPeer, sendRequest, sendResponse),
-    _config(config), _sharedData(sharedData)
+    _config(config), _sharedData(sharedData), _handle(std::make_shared<SessionHandle>(this))
 {
 }
 
@@ -28,14 +40,23 @@ Session::Session(
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
     ServerSession(config->iceServers, createPeer, createRecordPeer, sendRequest, sendResponse),
-    _config(config), _sharedData(sharedData)
+    _config(config), _sharedData(sharedData), _handle(std::make_shared<SessionHandle>(this))
 {
 }
 
 Session::~Session() {
-    for(auto& pair :_sharedData->recordMountpointsData) {
+    for(auto& pair: _sharedData->recordMountpointsData) {
         RecordMountpointData& data = pair.second;
         data.subscriptions.erase(this);
+    }
+
+    auto& agentsMountpoints = _sharedData->agentsMountpoints;
+    for(auto it = agentsMountpoints.begin(); it != agentsMountpoints.end();) {
+        if(it->second == this) {
+            it = agentsMountpoints.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 
@@ -99,7 +120,7 @@ bool Session::authorizeRecord(const std::unique_ptr<rtsp::Request>& requestPtr) 
     if(it->second.type != StreamerConfig::Type::Record)
         return false;
 
-    if(it->second.recordToken.empty())
+    if(it->second.remoteAgentToken.empty())
         return true;
 
     const std::pair<rtsp::Authentication, std::string> authPair =
@@ -108,7 +129,33 @@ bool Session::authorizeRecord(const std::unique_ptr<rtsp::Request>& requestPtr) 
     if(authPair.first != rtsp::Authentication::Bearer) // FIXME? only Bearer supported atm
         return false;
 
-    return authPair.second == it->second.recordToken;
+    return authPair.second == it->second.remoteAgentToken;
+}
+
+bool Session::authorizeAgentList(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(requestPtr->method != rtsp::Method::LIST)
+        return false;
+
+    auto it = _config->streamers.find(requestPtr->uri);
+    if(it == _config->streamers.end())
+        return false;
+
+    if(it->second.type != StreamerConfig::Type::Proxy) {
+        const std::string& contentType = rtsp::RequestContentType(*requestPtr);
+        return contentType.empty() && requestPtr->body.empty();
+    }
+
+    if(it->second.remoteAgentToken.empty())
+        return true;
+
+    const std::pair<rtsp::Authentication, std::string> authPair =
+        rtsp::ParseAuthentication(*requestPtr);
+
+    if(authPair.first != rtsp::Authentication::Bearer) // FIXME? only Bearer supported atm
+        return false;
+
+    return authPair.second == it->second.remoteAgentToken;
 }
 
 bool Session::isValidCookie(const std::optional<std::string>& authCookie) noexcept
@@ -130,12 +177,9 @@ bool Session::isValidCookie(const std::optional<std::string>& authCookie) noexce
 
 bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    switch(requestPtr->method) {
-    case rtsp::Method::RECORD:
-        return authorizeRecord(requestPtr);
-    case rtsp::Method::SUBSCRIBE:
-    case rtsp::Method::DESCRIBE:
+    auto authRequired = [this, &requestPtr] () {
         bool authRequired = true;
+
         if(requestPtr->uri == rtsp::WildcardUri) {
             authRequired = _config->authRequired;
         } else {
@@ -148,9 +192,21 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
                     (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
         }
 
-        if(authRequired) {
+        return authRequired;
+    };
+
+    switch(requestPtr->method) {
+    case rtsp::Method::RECORD:
+        return authorizeRecord(requestPtr);
+    case rtsp::Method::LIST:
+        if(!rtsp::RequestContentType(*requestPtr).empty())
+            return authorizeAgentList(requestPtr);
+        else if(authRequired())
             return isValidCookie(authCookie());
-        }
+    case rtsp::Method::SUBSCRIBE:
+    case rtsp::Method::DESCRIBE:
+        if(authRequired())
+            return isValidCookie(authCookie());
         break;
     }
 
@@ -166,8 +222,12 @@ bool Session::listEnabled(const std::string& uri) noexcept
     if(streamerIt == _config->streamers.end())
         return false;
 
-    if(streamerIt->second.type == StreamerConfig::Type::FilePlayer)
+    if(
+        streamerIt->second.type == StreamerConfig::Type::FilePlayer ||
+        streamerIt->second.type == StreamerConfig::Type::Proxy)
+    {
         return true;
+    }
 
     return false;
 }
@@ -181,11 +241,10 @@ bool Session::onListRequest(
     if(!listEnabled(uri))
         return false;
 
-    if(!contentType.empty() || !requestPtr->body.empty())
-        return false;
-
-    if(uri == "*") {
-        if(isValidCookie(authCookie())) {
+    if(uri == rtsp::WildcardUri) {
+        if(!contentType.empty() || !requestPtr->body.empty()) {
+            return false;
+        } else if(isValidCookie(authCookie())) {
             sendOkResponse(requestPtr->cseq, rtsp::TextParametersContentType, _sharedData->protectedListCache);
         } else {
             sendOkResponse(requestPtr->cseq, rtsp::TextParametersContentType, _sharedData->publicListCache);
@@ -198,21 +257,59 @@ bool Session::onListRequest(
     if(streamerIt == _config->streamers.end())
         return false;
 
-    if(streamerIt->second.type == StreamerConfig::Type::FilePlayer) {
-        auto listIt = _sharedData->mountpointsListsCache.find(uri);
-        if(listIt == _sharedData->mountpointsListsCache.end()) {
-            sendOkResponse(
-                requestPtr->cseq,
-                rtsp::TextParametersContentType,
-                "\r\n");
-        } else {
-            sendOkResponse(
-                requestPtr->cseq,
-                rtsp::TextParametersContentType,
-                listIt->second);
-        }
+    if(streamerIt->second.type != StreamerConfig::Type::Proxy &&
+        (!contentType.empty() || !requestPtr->body.empty()))
+    {
+        return false;
+    }
 
-        return true;
+    auto sendCachedListResponse =
+        [this, &uri, cseq = requestPtr->cseq] () {
+            auto listIt = _sharedData->mountpointsListsCache.find(uri);
+            if(listIt == _sharedData->mountpointsListsCache.end()) {
+                sendOkResponse(
+                    cseq,
+                    rtsp::TextParametersContentType,
+                    "\r\n");
+            } else {
+                sendOkResponse(
+                    cseq,
+                    rtsp::TextParametersContentType,
+                    listIt->second);
+            }
+        };
+
+    switch(streamerIt->second.type) {
+        case StreamerConfig::Type::FilePlayer: {
+            sendCachedListResponse();
+            return true;
+        }
+        case StreamerConfig::Type::Proxy: {
+            if(contentType.empty()) {
+                sendCachedListResponse();
+            } else {
+                rtsp::Parameters inList;
+                if(rtsp::ParseParameters(requestPtr->body, &inList)) {
+                    std::string list;
+                    for(auto& name2desc: inList) {
+                        list += uri;
+                        list += rtsp::UriSeparator;
+                        list += name2desc.first;
+                        list += ": ";
+                        list += name2desc.second;
+                        list += "\r\n";
+                    }
+                    _sharedData->agentsMountpoints[uri] = this;
+                    _sharedData->mountpointsListsCache[uri] = list;
+                    sendOkResponse(requestPtr->cseq);
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+        default:
+            break;
     }
 
     return false;
@@ -250,6 +347,177 @@ bool Session::onSubscribeRequest(
         Log()->info("[{}] Streamer \"{}\" already active. Starting record to client...", sessionLogId.c_str(), requestPtr->uri);
         startRecordToClient(requestPtr->uri, mediaSessionId);
     }
+
+    return true;
+}
+
+bool Session::handleResponse(
+    const rtsp::Request& request,
+    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
+{
+    auto it = _forwardedRequests.find(request.cseq);
+    if(it != _forwardedRequests.end()) {
+        ForwardedRequest& sourceRequest = it->second;
+        bool success = forwardResponse(sourceRequest, request, responsePtr);
+        _forwardedRequests.erase(it);
+        return success;
+    } else
+        return ServerSession::handleResponse(request, responsePtr);
+}
+
+bool Session::isProxyRequest(const rtsp::Request& request) noexcept
+{
+    const rtsp::SessionId& mediaSessionId = rtsp::RequestSession(request);
+    if(!mediaSessionId.empty() &&
+        _agentMediaSessions2clientMediaSession.find(mediaSessionId) != _agentMediaSessions2clientMediaSession.end())
+    {
+        return true;
+    }
+
+    const std::string& uri = request.uri;
+    const std::string& streamerName = rtsp::SplitUri(uri).first;
+    auto it = _config->streamers.find(streamerName);
+    if(it == _config->streamers.end())
+        return false;
+
+    return it->second.type == StreamerConfig::Type::Proxy;
+}
+
+bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    assert(isProxyRequest(*requestPtr));
+
+    const rtsp::SessionId& mediaSessionId = rtsp::RequestSession(*requestPtr);
+
+    if(!mediaSessionId.empty()) {
+        auto it = _agentMediaSessions2clientMediaSession.find(mediaSessionId);
+        if(it != _agentMediaSessions2clientMediaSession.end()) {
+            const MediaSessionInfo& target = it->second;
+            std::shared_ptr<SessionHandle> targetSession = target.mediaSessionOwner.lock();
+            if(!targetSession) {
+                assert(false); // FIXME! send back TEARDOWN for media session
+                return false;
+            }
+
+            std::string sourceUri;
+            sourceUri.swap(requestPtr->uri);
+            requestPtr->uri = target.uri;
+            rtsp::SetRequestSession(requestPtr.get(), target.mediaSession);
+            (*targetSession)->forwardRequest(_handle, sourceUri, requestPtr);
+
+            return true;
+        }
+    }
+
+    auto [streamerName, substream] = rtsp::SplitUri(requestPtr->uri);
+
+    auto agentMountpointIt = _sharedData->agentsMountpoints.find(streamerName);
+    if(agentMountpointIt == _sharedData->agentsMountpoints.end())
+        return false;
+
+    rtsp::MediaSessionId agentMediaSession;
+    if(!mediaSessionId.empty()) {
+        auto it = _clientMediaSession2agentMediaSession.find(mediaSessionId);
+        if(it != _clientMediaSession2agentMediaSession.end()) {
+            agentMediaSession = it->second.mediaSession;
+        }
+    } else {
+        assert(requestPtr->method == rtsp::Method::DESCRIBE);
+    }
+
+    assert(!substream.empty());
+    std::string sourceUri;
+    sourceUri.swap(requestPtr->uri);
+    requestPtr->uri.swap(substream);
+    if(!agentMediaSession.empty())
+        rtsp::SetRequestSession(requestPtr.get(), agentMediaSession);
+
+    Session* agentSession = agentMountpointIt->second;
+    return agentSession->forwardRequest(_handle, sourceUri, requestPtr);
+}
+
+bool Session::forwardRequest(
+    std::shared_ptr<SessionHandle>& sourceSession,
+    const std::string& sourceUri,
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    rtsp::Request* attachedRequest = attachRequest(requestPtr);
+
+    assert(!requestPtr->uri.empty());
+    const bool added = _forwardedRequests.emplace(
+        attachedRequest->cseq,
+        ForwardedRequest {
+            sourceUri,
+            requestPtr->cseq,
+            sourceSession }).second;
+    assert(added);
+
+    Log()->debug(
+        "[{}] Forwarding request:\n"
+        "Uri: \"{}\" -> \"{}\"\n"
+        "CSeq: {} -> {}",
+        sessionLogId.c_str(),
+        sourceUri, attachedRequest->uri,
+        requestPtr->cseq, attachedRequest->cseq);
+
+    sendRequest(*attachedRequest);
+
+    return true;
+}
+
+rtsp::MediaSessionId Session::registerAgentMediaSession(
+    std::shared_ptr<SessionHandle>& agentSession,
+    const std::string& uri,
+    rtsp::MediaSessionId mediaSession) noexcept
+{
+    rtsp::MediaSessionId ownMediaSession = nextSessionId();
+    bool added = _clientMediaSession2agentMediaSession.emplace(
+        ownMediaSession,
+        MediaSessionInfo {
+            agentSession,
+            uri,
+            mediaSession }).second;
+    assert(added);
+
+    return ownMediaSession;
+}
+
+bool Session::forwardResponse(
+    ForwardedRequest& sourceRequest,
+    const rtsp::Request& request,
+    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
+{
+    const std::string sourceUri = sourceRequest.sourceUri;
+    std::shared_ptr<SessionHandle> proxySession = sourceRequest.sourceSession.lock();
+    const rtsp::CSeq sourceCSeq = sourceRequest.sourceCSeq;
+
+    if(!proxySession) {
+        assert(false); // FIXME! send back TEARDOWN for media session
+        return false;
+    }
+
+    responsePtr->cseq = sourceCSeq;
+
+    if(responsePtr->statusCode == rtsp::StatusCode::OK) {
+        const rtsp::SessionId& mediaSessionId = rtsp::ResponseSession(*responsePtr);
+        if(mediaSessionId.empty()) {
+            assert(false);
+            return false;
+        }
+
+        if(request.method == rtsp::Method::DESCRIBE) {
+            const rtsp::SessionId clientMediaSessionId =
+                (*proxySession)->registerAgentMediaSession(_handle, request.uri, mediaSessionId);
+            _agentMediaSessions2clientMediaSession.emplace(
+                mediaSessionId,
+                MediaSessionInfo {
+                    proxySession,
+                    sourceUri,
+                    clientMediaSessionId });
+        }
+    }
+
+    (*proxySession)->sendResponse(*responsePtr);
 
     return true;
 }

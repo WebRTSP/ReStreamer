@@ -7,6 +7,21 @@ http-port: 5080
 // to custom web client
 #www-root: "www"
 
+// if defined app will act as remote access agent
+#signalling-server: {
+#  host: "localhost"
+#  port: 5554
+#  uri: "proxy"
+#  token: "token"
+#}
+
+signalling-server: {
+  host: "localhost"
+  port: 5554
+  uri: "proxy"
+  token: "token"
+}
+
 streamers: (
   {
     name: "Price Center Plaza",
@@ -104,6 +119,11 @@ streamers: (
 #    username: "user",
 #    password: "pass",
 #    force-h264-profile-level-id: "42c015"
+  },
+  {
+    name: "proxy",
+    type: "proxy",
+    agent-token: "token",
   }
 )
 
@@ -121,6 +141,6 @@ streamers: (
 #turn-server: "turn://username:password@host:port"
 
 debug: {
-#  log-level: 3
+  log-level: 5
 #  lws-log-level: 2
 }

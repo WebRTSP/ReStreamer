@@ -13,10 +13,12 @@ struct RecordMountpointData {
     std::unordered_map<ServerSession*, rtsp::SessionId> subscriptions;
 };
 
+class Session;
 struct SessionsSharedData {
     const std::string publicListCache;
     const std::string protectedListCache;
     std::unordered_map<std::string, const SessionAuthTokenData> authTokens;
     std::map<std::string, RecordMountpointData> recordMountpointsData;
     std::map<std::string, std::string> mountpointsListsCache;
+    std::map<std::string, Session*> agentsMountpoints;
 };

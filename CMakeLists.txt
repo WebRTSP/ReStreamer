@@ -41,6 +41,7 @@ target_link_libraries(${PROJECT_NAME}
     ${SPDLOG_LDFLAGS}
     Http
     RtspParser
+    Client
     Signalling
     RtStreaming)
 
