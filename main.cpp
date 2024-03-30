@@ -119,6 +119,30 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     Log()->error("TURN server URL should start with \"turn://\"");
                }
             }
+
+            int minRtpPort;
+            int rtpPortsCount;
+            if(CONFIG_TRUE == config_setting_lookup_int(webrtcConfig, "min-rtp-port", &minRtpPort)) {
+                if(minRtpPort < std::numeric_limits<uint16_t>::min() || minRtpPort > std::numeric_limits<uint16_t>::max()) {
+                    Log()->error(
+                        "min-rtp-port should be in [{}, {}]",
+                        std::numeric_limits<uint16_t>::min(),
+                        std::numeric_limits<uint16_t>::max());
+                } else {
+                    loadedConfig.webRTCConfig->minRtpPort = minRtpPort;
+
+                    if(CONFIG_TRUE == config_setting_lookup_int(webrtcConfig, "rtp-ports-count", &rtpPortsCount)) {
+                        if(minRtpPort < 1 || minRtpPort > std::numeric_limits<uint16_t>::max()) {
+                            Log()->error(
+                                "rtp-ports-count should be in [{}, {}]",
+                                1,
+                                std::numeric_limits<uint16_t>::max() - minRtpPort + 1);
+                        } else {
+                            loadedConfig.webRTCConfig->maxRtpPort = minRtpPort + rtpPortsCount - 1;
+                        }
+                    }
+                }
+            }
         } else {
             if(CONFIG_TRUE == config_lookup_string(&config, "stun-server", &stunServer)) {
                 if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {

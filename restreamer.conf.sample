@@ -120,6 +120,8 @@ streamers: (
 webrtc: {
 #  stun-server: "stun://stun.l.google.com:19302"
 #  turn-server: "turn://username:password@host:port"
+#  min-rtp-port: 0
+#  rtp-ports-count: 65535
 }
 
 debug: {
