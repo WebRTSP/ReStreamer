@@ -93,7 +93,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             const char* stunServer = nullptr;
             if(CONFIG_TRUE == config_setting_lookup_string(stunServerConfig, "server", &stunServer)) {
                 if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
-                    loadedConfig.iceServers.emplace_back(stunServer);
+                    loadedConfig.webRTCConfig->iceServers.emplace_back(stunServer);
                 } else {
                     Log()->error("STUN server URL should start with \"stun://\"");
                 }
@@ -101,21 +101,39 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         }
 
         const char* stunServer = nullptr;
-        if(CONFIG_TRUE == config_lookup_string(&config, "stun-server", &stunServer)) {
-            if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
-                loadedConfig.iceServers.emplace_back(stunServer);
-            } else {
-                Log()->error("STUN server URL should start with \"stun://\"");
-            }
-        }
-
         const char* turnServer = nullptr;
-        if(CONFIG_TRUE == config_lookup_string(&config, "turn-server", &turnServer)) {
-           if(0 == g_ascii_strncasecmp(turnServer, "turn://", 7)) {
-                loadedConfig.iceServers.emplace_back(turnServer);
-            } else {
-                Log()->error("TURN server URL should start with \"turn://\"");
-           }
+        config_setting_t* webrtcConfig = config_lookup(&config, "webrtc");
+        if(webrtcConfig && CONFIG_TRUE == config_setting_is_group(webrtcConfig)) {
+            if(CONFIG_TRUE == config_setting_lookup_string(webrtcConfig, "stun-server", &stunServer)) {
+                if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
+                    loadedConfig.webRTCConfig->iceServers.emplace_back(stunServer);
+                } else {
+                    Log()->error("STUN server URL should start with \"stun://\"");
+                }
+            }
+
+            if(CONFIG_TRUE == config_setting_lookup_string(webrtcConfig, "turn-server", &turnServer)) {
+               if(0 == g_ascii_strncasecmp(turnServer, "turn://", 7)) {
+                    loadedConfig.webRTCConfig->iceServers.emplace_back(turnServer);
+                } else {
+                    Log()->error("TURN server URL should start with \"turn://\"");
+               }
+            }
+        } else {
+            if(CONFIG_TRUE == config_lookup_string(&config, "stun-server", &stunServer)) {
+                if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
+                    loadedConfig.webRTCConfig->iceServers.emplace_back(stunServer);
+                } else {
+                    Log()->error("STUN server URL should start with \"stun://\"");
+                }
+            }
+            if(CONFIG_TRUE == config_lookup_string(&config, "turn-server", &turnServer)) {
+               if(0 == g_ascii_strncasecmp(turnServer, "turn://", 7)) {
+                    loadedConfig.webRTCConfig->iceServers.emplace_back(turnServer);
+                } else {
+                    Log()->error("TURN server URL should start with \"turn://\"");
+               }
+            }
         }
 
         config_setting_t* debugConfig = config_lookup(&config, "debug");

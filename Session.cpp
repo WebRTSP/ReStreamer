@@ -15,7 +15,7 @@ Session::Session(
     const CreatePeer& createPeer,
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
-    ServerSession(config->iceServers, createPeer,sendRequest, sendResponse),
+    ServerSession(config->webRTCConfig, createPeer,sendRequest, sendResponse),
     _config(config), _sharedData(sharedData)
 {
 }
@@ -27,7 +27,7 @@ Session::Session(
     const CreatePeer& createRecordPeer,
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
-    ServerSession(config->iceServers, createPeer, createRecordPeer, sendRequest, sendResponse),
+    ServerSession(config->webRTCConfig, createPeer, createRecordPeer, sendRequest, sendResponse),
     _config(config), _sharedData(sharedData)
 {
 }

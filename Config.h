@@ -9,6 +9,8 @@
 
 #include "Signalling/Config.h"
 
+#include "RtStreaming/WebRTCConfig.h"
+
 
 struct RecordConfig
 {
@@ -61,9 +63,8 @@ struct Config : public signalling::Config
     spdlog::level::level_enum logLevel = spdlog::level::info;
     spdlog::level::level_enum lwsLogLevel = spdlog::level::warn;
 
-    typedef std::deque<std::string> IceServers;
-    IceServers iceServers;
-
     std::map<std::string, StreamerConfig> streamers; // escaped streamer name -> StreamerConfig
     bool authRequired = true;
+
+    std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();
 };

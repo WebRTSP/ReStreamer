@@ -610,7 +610,7 @@ int ReStreamerMain(
 
     std::string configJs =
         fmt::format("const WebRTSPPort = {};\r\n", config.port);
-    for(std::string iceServer: config.iceServers) {
+    for(std::string iceServer: config.webRTCConfig->iceServers) {
         if(0 == iceServer.compare(0, 7, "stun://")) {
             iceServer.erase(5, 2); // "stun://..." -> "stun:..."
             configJs += fmt::format("const STUNServer = \"{}\";\r\n", iceServer);
