@@ -16,6 +16,7 @@
 #include "RtspParser/RtspParser.h"
 
 #include "Signalling/WsServer.h"
+#include "Client/WsClient.h"
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer.h"
@@ -27,6 +28,7 @@
 
 #include "Log.h"
 #include "Session.h"
+#include "SignallingClientSession.h"
 
 
 namespace {
@@ -34,12 +36,23 @@ namespace {
 const unsigned AuthTokenCleanupInterval = 15; // seconds
 
 enum {
-    MAX_FILES_TO_CLEANUP = 10
+    MAX_FILES_TO_CLEANUP = 10,
+
+    MIN_RECONNECT_TIMEOUT = 3, // seconds
+    MAX_RECONNECT_TIMEOUT = 10, // seconds
 };
 
 const auto Log = ReStreamerLog;
 
-std::string GenerateList(const Config& config, bool addPublicOnly) {
+enum class ListType {
+    Public,
+    Protected,
+    Agent,
+};
+
+std::string GenerateList(const Config& config, ListType type) {
+    const bool addPublicOnly = (type == ListType::Public) || (type == ListType::Agent);
+    const bool skipProxy = type == ListType::Agent;
     std::string list;
     if(config.streamers.empty()) {
         list = "\r\n";
@@ -50,7 +63,12 @@ std::string GenerateList(const Config& config, bool addPublicOnly) {
                 (pair.second.visibility == Visibility::Auto && !config.authRequired) ||
                 pair.second.visibility == Visibility::Public;
 
-            if(!pair.second.restream || (addPublicOnly && !isPublic)) continue;
+            if(!pair.second.restream ||
+                (addPublicOnly && !isPublic) ||
+                (skipProxy && pair.second.type == StreamerConfig::Type::Proxy))
+            {
+                continue;
+            }
 
             list += pair.first;
             list += ": ";
@@ -494,6 +512,40 @@ static std::unique_ptr<ServerSession> CreateSession(
     return session;
 }
 
+namespace {
+
+std::unique_ptr<rtsp::Session> CreateSignallingSession(
+    const Config* config,
+    MountPoints* mountPoints,
+    const Session::SharedData* sharedData,
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse)
+{
+    return
+        std::make_unique<SignallingClientSession>(
+            config,
+            sharedData,
+            std::bind(CreatePeer, config, mountPoints, std::placeholders::_1),
+            sendRequest, sendResponse);
+}
+
+void ClientDisconnected(client::WsClient& client)
+{
+    const unsigned reconnectTimeout =
+        g_random_int_range(MIN_RECONNECT_TIMEOUT, MAX_RECONNECT_TIMEOUT + 1);
+    Log()->info("Scheduling reconnect withing \"{}\" seconds...", reconnectTimeout);
+    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(reconnectTimeout));
+    GSource* timeoutSource = timeoutSourcePtr.get();
+    g_source_set_callback(timeoutSource,
+        [] (gpointer userData) -> gboolean {
+            static_cast<client::WsClient*>(userData)->connect();
+            return false;
+        }, &client, nullptr);
+    g_source_attach(timeoutSource, g_main_context_get_thread_default());
+}
+
+}
+
 static void OnRecorderConnected(Session::SharedData* sharedData, const std::string& uri)
 {
     Log()->info("Recorder connected to \"{}\" streamer", uri);
@@ -542,7 +594,11 @@ int ReStreamerMain(
     GMainLoopPtr loopPtr(g_main_loop_new(context, FALSE));
     GMainLoop* loop = loopPtr.get();
 
-    Session::SharedData sessionsSharedData { GenerateList(config, true), GenerateList(config, false) };
+    Session::SharedData sessionsSharedData {
+        .publicListCache = GenerateList(config, ListType::Public),
+        .protectedListCache = GenerateList(config, ListType::Protected),
+        .agentListCache = GenerateList(config, ListType::Agent),
+    };
 
     std::deque<RecordConfig> cleanupList;
     std::deque<std::pair<std::string, std::string>> monitorList;
@@ -618,16 +674,37 @@ int ReStreamerMain(
         }
     }
 
-    signalling::WsServer server(
-        config,
-        loop,
-        std::bind(
-            CreateSession,
-            &config,
-            &mountPoints,
-            &sessionsSharedData,
-            std::placeholders::_1,
-            std::placeholders::_2));
+    std::unique_ptr<signalling::WsServer> serverPtr;
+    std::unique_ptr<client::WsClient> signallingClient;
+    if(config.signallingServer) {
+        signallingClient = std::make_unique<client::WsClient>(
+            *config.signallingServer,
+            loop,
+            std::bind(
+                CreateSignallingSession,
+                &config,
+                &mountPoints,
+                &sessionsSharedData,
+                std::placeholders::_1,
+                std::placeholders::_2),
+            std::bind(ClientDisconnected, std::placeholders::_1));
+    }
+#if NDEBUG
+    else {
+#else
+    {
+#endif
+        serverPtr = std::make_unique<signalling::WsServer>(
+            config,
+            loop,
+            std::bind(
+                CreateSession,
+                &config,
+                &mountPoints,
+                &sessionsSharedData,
+                std::placeholders::_1,
+                std::placeholders::_2));
+    }
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
     if(httpConfig.port) {
@@ -666,9 +743,15 @@ int ReStreamerMain(
                 std::ref(monitorList)));
     }
 
-    if((!httpServerPtr || httpServerPtr->init()) && server.init(lwsContext))
+    if((!httpServerPtr || httpServerPtr->init()) &&
+        (!serverPtr || serverPtr->init(lwsContext)) &&
+        (!signallingClient || signallingClient->init()))
+    {
+        if(signallingClient)
+            signallingClient->connect();
+
         g_main_loop_run(loop);
-    else
+    } else
         return -1;
 
     return 0;

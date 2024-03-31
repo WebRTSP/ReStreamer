@@ -180,6 +180,26 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
+        config_setting_t* signallingServerConfig = config_lookup(&config, "signalling-server");
+        if(signallingServerConfig && CONFIG_TRUE == config_setting_is_group(signallingServerConfig)) {
+            const char* host = nullptr;
+            const char* uri = nullptr;
+            const char* token = nullptr;
+            config_setting_lookup_string(signallingServerConfig, "host", &host);
+            config_setting_lookup_string(signallingServerConfig, "uri", &uri);
+            config_setting_lookup_string(signallingServerConfig, "token", &token);
+            if(host && uri) {
+                SignallingServer signallingServer(host, uri, token);
+
+                int port = 0;
+                config_setting_lookup_int(signallingServerConfig, "port", &port);
+                if(port > 0 )
+                    signallingServer.serverPort = port;
+
+                loadedConfig.signallingServer = signallingServer;
+            }
+        }
+
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
         if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
             const int streamersCount = config_setting_length(streamersConfig);
@@ -199,8 +219,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 int restream = TRUE;
                 config_setting_lookup_bool(streamerConfig, "restream", &restream);
 
-                const char* recordToken = "";
-                config_setting_lookup_string(streamerConfig, "record-token", &recordToken);
+                const char* agentToken = "";
+                config_setting_lookup_string(streamerConfig, "record-token", &agentToken);
+                config_setting_lookup_string(streamerConfig, "agent-token", &agentToken);
 
                 const char* type = nullptr;
                 config_setting_lookup_string(streamerConfig, "type", &type);
@@ -250,6 +271,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     streamerType = StreamerConfig::Type::Record;
                 else if(0 == strcmp(type, "player"))
                     streamerType = StreamerConfig::Type::FilePlayer;
+                else if(0 == strcmp(type, "proxy"))
+                    streamerType = StreamerConfig::Type::Proxy;
                 else {
                     Log()->warn("Unknown streamer type. Streamer skipped.");
                     break;
@@ -257,6 +280,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
 
                 if(streamerType != StreamerConfig::Type::Record &&
                    streamerType != StreamerConfig::Type::FilePlayer &&
+                   streamerType != StreamerConfig::Type::Proxy &&
                    !uri)
                 {
                     Log()->warn("Missing streamer uri. Streamer skipped.");
@@ -318,7 +342,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                         password ?
                             std::make_optional<std::string>(password) :
                             std::optional<std::string>(),
-                        recordToken,
+                        agentToken,
                         description ?
                             std::string(description) :
                             std::string(),
