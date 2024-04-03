@@ -368,7 +368,7 @@ bool Session::onSubscribeRequest(
         return false;
     }
 
-    rtsp::SessionId mediaSessionId = nextSessionId();
+    rtsp::MediaSessionId mediaSessionId = nextSessionId();
     if(!data.recording) {
         Log()->info("[{}] Streamer \"{}\" not active yet. Subscribing...", sessionLogId.c_str(), requestPtr->uri);
         data.subscriptions.emplace(this, mediaSessionId);
@@ -400,7 +400,7 @@ bool Session::handleResponse(
 
 bool Session::isProxyRequest(const rtsp::Request& request) noexcept
 {
-    const rtsp::SessionId& mediaSessionId = rtsp::RequestSession(request);
+    const rtsp::MediaSessionId& mediaSessionId = rtsp::RequestSession(request);
     if(!mediaSessionId.empty() &&
         _agentMediaSessions2clientMediaSession.find(mediaSessionId) != _agentMediaSessions2clientMediaSession.end())
     {
@@ -420,7 +420,7 @@ bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noe
 {
     assert(isProxyRequest(*requestPtr));
 
-    const rtsp::SessionId& mediaSessionId = rtsp::RequestSession(*requestPtr);
+    const rtsp::MediaSessionId& mediaSessionId = rtsp::RequestSession(*requestPtr);
 
     if(!mediaSessionId.empty()) {
         auto it = _agentMediaSessions2clientMediaSession.find(mediaSessionId);
@@ -451,7 +451,7 @@ bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noe
     if(agentMountpointIt == _sharedData->agentsMountpoints.end())
         return false;
 
-    rtsp::SessionId agentMediaSession;
+    rtsp::MediaSessionId agentMediaSession;
     if(!mediaSessionId.empty()) {
         auto it = _clientMediaSession2agentMediaSession.find(mediaSessionId);
         if(it != _clientMediaSession2agentMediaSession.end()) {
@@ -509,12 +509,12 @@ bool Session::forwardRequest(
     return true;
 }
 
-rtsp::SessionId Session::registerAgentMediaSession(
+rtsp::MediaSessionId Session::registerAgentMediaSession(
     std::shared_ptr<SessionHandle>& agentSession,
     const std::string& uri,
-    const rtsp::SessionId& mediaSession) noexcept
+    const rtsp::MediaSessionId& mediaSession) noexcept
 {
-    rtsp::SessionId ownMediaSession = nextSessionId();
+    rtsp::MediaSessionId ownMediaSession = nextSessionId();
     bool added = _clientMediaSession2agentMediaSession.emplace(
         ownMediaSession,
         MediaSessionInfo {
@@ -543,14 +543,14 @@ bool Session::forwardResponse(
     responsePtr->cseq = sourceCSeq;
 
     if(responsePtr->statusCode == rtsp::StatusCode::OK) {
-        const rtsp::SessionId& mediaSessionId = rtsp::ResponseSession(*responsePtr);
+        const rtsp::MediaSessionId& mediaSessionId = rtsp::ResponseSession(*responsePtr);
         if(mediaSessionId.empty()) {
             assert(false);
             return false;
         }
 
         if(request.method == rtsp::Method::DESCRIBE) {
-            const rtsp::SessionId clientMediaSessionId =
+            const rtsp::MediaSessionId clientMediaSessionId =
                 (*proxySession)->registerAgentMediaSession(_handle, request.uri, mediaSessionId);
             _agentMediaSessions2clientMediaSession.emplace(
                 mediaSessionId,
@@ -581,7 +581,7 @@ void Session::forwardTeardown(const MediaSessionInfo& target) noexcept
     (*targetSession)->forwardRequest(_handle, std::string(), requestPtr);
 }
 
-void Session::teardownMediaSession(const rtsp::SessionId& mediaSession) noexcept
+void Session::teardownMediaSession(const rtsp::MediaSessionId& mediaSession) noexcept
 {
     assert(!mediaSession.empty());
     if(mediaSession.empty())

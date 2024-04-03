@@ -66,15 +66,15 @@ private:
     struct MediaSessionInfo {
         std::weak_ptr<SessionHandle> mediaSessionOwner;
         std::string uri;
-        rtsp::SessionId mediaSession;
+        rtsp::MediaSessionId mediaSession;
     };
 
-    void startRecord(const std::string& uri, const rtsp::SessionId& mediaSession) noexcept;
+    void startRecord(const std::string& uri, const rtsp::MediaSessionId& mediaSession) noexcept;
 
-    rtsp::SessionId registerAgentMediaSession(
+    rtsp::MediaSessionId registerAgentMediaSession(
         std::shared_ptr<SessionHandle>& agentSession,
         const std::string& uri,
-        const rtsp::SessionId& mediaSession) noexcept;
+        const rtsp::MediaSessionId& mediaSession) noexcept;
 
     bool forwardRequest(
         std::shared_ptr<SessionHandle>& sourceSession,
@@ -86,7 +86,7 @@ private:
         std::unique_ptr<rtsp::Response>&) noexcept;
     void forwardTeardown(const MediaSessionInfo&) noexcept;
 
-    void teardownMediaSession(const rtsp::SessionId&) noexcept override;
+    void teardownMediaSession(const rtsp::MediaSessionId&) noexcept override;
 
 private:
     const Config *const _config;
@@ -97,8 +97,8 @@ private:
     std::map<rtsp::CSeq, ForwardedRequest> _forwardedRequests;
 
     // client side data
-    std::map<rtsp::SessionId, MediaSessionInfo> _clientMediaSession2agentMediaSession;
+    std::map<rtsp::MediaSessionId, MediaSessionInfo> _clientMediaSession2agentMediaSession;
 
     // agent side data
-    std::map<rtsp::SessionId, MediaSessionInfo> _agentMediaSessions2clientMediaSession;
+    std::map<rtsp::MediaSessionId, MediaSessionInfo> _agentMediaSessions2clientMediaSession;
 };

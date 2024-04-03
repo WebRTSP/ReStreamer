@@ -554,11 +554,11 @@ static void OnRecorderConnected(Session::SharedData* sharedData, const std::stri
 
     data.recording = true;
 
-    std::unordered_map<ServerSession*, rtsp::SessionId> subscriptions;
+    std::unordered_map<ServerSession*, rtsp::MediaSessionId> subscriptions;
     data.subscriptions.swap(subscriptions);
     for(auto& session2session: subscriptions) {
         ServerSession* session = session2session.first;
-        const rtsp::SessionId& mediaSession = session2session.second;
+        const rtsp::MediaSessionId& mediaSession = session2session.second;
         session->startRecordToClient(uri, mediaSession);
     }
 }
