@@ -214,7 +214,7 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
         bool authRequired = true;
 
         if(requestPtr->uri == rtsp::WildcardUri) {
-            authRequired = _config->authRequired;
+            authRequired = requestPtr->method != rtsp::Method::LIST && _config->authRequired;
         } else {
             const auto& [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
             auto streamerIt = _config->streamers.find(streamerName);
