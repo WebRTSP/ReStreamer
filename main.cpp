@@ -88,18 +88,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             loadedHttpConfig.port = 0;
         }
 
-        config_setting_t* stunServerConfig = config_lookup(&config, "stun");
-        if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
-            const char* stunServer = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(stunServerConfig, "server", &stunServer)) {
-                if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
-                    loadedConfig.webRTCConfig->iceServers.emplace_back(stunServer);
-                } else {
-                    Log()->error("STUN server URL should start with \"stun://\"");
-                }
-            }
-        }
-
         const char* stunServer = nullptr;
         const char* turnServer = nullptr;
         config_setting_t* webrtcConfig = config_lookup(&config, "webrtc");
@@ -143,7 +131,18 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     }
                 }
             }
-        } else {
+        } else { // Deprecated. For backward compatibility
+            config_setting_t* stunServerConfig = config_lookup(&config, "stun");
+            if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
+                if(CONFIG_TRUE == config_setting_lookup_string(stunServerConfig, "server", &stunServer)) {
+                    if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
+                        loadedConfig.webRTCConfig->iceServers.emplace_back(stunServer);
+                    } else {
+                        Log()->error("STUN server URL should start with \"stun://\"");
+                    }
+                }
+            }
+
             if(CONFIG_TRUE == config_lookup_string(&config, "stun-server", &stunServer)) {
                 if(0 == g_ascii_strncasecmp(stunServer, "stun://", 7)) {
                     loadedConfig.webRTCConfig->iceServers.emplace_back(stunServer);
