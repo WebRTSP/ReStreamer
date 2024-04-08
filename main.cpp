@@ -190,7 +190,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             config_setting_lookup_string(signallingServerConfig, "uri", &uri);
             config_setting_lookup_string(signallingServerConfig, "token", &token);
             if(host && uri) {
-                SignallingServer signallingServer(host, uri, token);
+                g_autofree gchar* escapedUri = g_uri_escape_string(uri, nullptr, false);
+                SignallingServer signallingServer(host, escapedUri, token);
 
                 int port = 0;
                 config_setting_lookup_int(signallingServerConfig, "port", &port);
