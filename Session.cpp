@@ -494,10 +494,11 @@ bool Session::forwardRequest(
     }
 
     Log()->debug(
-        "[{}] Forwarding request:\n"
+        "Forwarding request:\n"
+        "[{}] -> [{}]\n"
         "Uri: \"{}\" -> \"{}\"\n"
         "CSeq: {} -> {}",
-        sessionLogId.c_str(),
+        (*sourceSession)->sessionLogId.c_str(), sessionLogId.c_str(),
         sourceUri, attachedRequest->uri,
         requestPtr->cseq, attachedRequest->cseq);
 
