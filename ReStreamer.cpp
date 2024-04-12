@@ -707,7 +707,11 @@ int ReStreamerMain(
     }
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
+#if NDEBUG
+    if(httpConfig.port && !config.signallingServer) {
+#else
     if(httpConfig.port) {
+#endif
         httpServerPtr =
             std::make_unique<http::MicroServer>(
                 httpConfig,
