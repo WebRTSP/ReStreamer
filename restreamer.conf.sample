@@ -10,7 +10,8 @@ http-port: 5080
 // if defined app will act as remote agent
 #signalling-server: {
 #  host: "localhost"
-#  port: 5554
+#  port: 5555
+#  tls: true
 #  uri: "proxy"
 #  token: "token"
 #}

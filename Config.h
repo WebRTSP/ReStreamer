@@ -18,11 +18,12 @@ struct SignallingServer : public client::Config
     SignallingServer(
         const std::string& server,
         const std::string& uri,
-        const std::string& token)
-        : uri(uri), token(token)
+        const std::string& token,
+        bool useTls) :
+        client::Config {server, signalling::Config().port, useTls},
+        uri(uri),
+        token(token)
     {
-        this->server = server;
-        serverPort = signalling::Config().port;
     }
 
     std::string uri;
