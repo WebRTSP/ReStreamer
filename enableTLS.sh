@@ -43,11 +43,6 @@ sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install nginx -y
 
-sudo systemctl stop nginx
-# sudo rm -rf /etc/nginx/sites-enabled/*
-
-sudo certbot certonly --standalone --non-interactive --agree-tos --email $EMAIL -d $TARGET_DOMAIN
-
 sudo tee /etc/nginx/conf.d/rtsp-to-webrtsp.conf > /dev/null <<'EOF2'
 
 # https
@@ -104,6 +99,9 @@ server {
 
 EOF2
 
+sudo certbot certonly --nginx --non-interactive --agree-tos --email $EMAIL -d $TARGET_DOMAIN
+
 sudo nginx -t
-sudo systemctl start nginx
+sudo systemctl restart nginx
+
 EOF
