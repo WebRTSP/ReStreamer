@@ -56,7 +56,8 @@ struct StreamerConfig
         ONVIFReStreamer,
         Record,
         FilePlayer,
-        Proxy
+        Proxy,
+        Pipeline,
     };
 
     enum class Visibility {
@@ -69,6 +70,7 @@ struct StreamerConfig
     Visibility visibility;
     Type type;
     std::string uri;
+    std::string pipeline;
     std::optional<std::string> username;
     std::optional<std::string> password;
     std::string remoteAgentToken;

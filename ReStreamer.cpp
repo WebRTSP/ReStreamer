@@ -25,6 +25,7 @@
 #include "RtStreaming/GstRtStreaming/GstReStreamer2.h"
 #include "RtStreaming/GstRtStreaming/ONVIFReStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
+#include "RtStreaming/GstRtStreaming/GstPipelineStreamer2.h"
 
 #include "Log.h"
 #include "Session.h"
@@ -646,6 +647,11 @@ int ReStreamerMain(
             break;
         case StreamerConfig::Type::FilePlayer:
             monitorList.emplace_back(pair.first, pair.second.uri);
+            break;
+        case StreamerConfig::Type::Pipeline:
+            mountPoints.emplace(
+                pair.first,
+                std::make_unique<GstPipelineStreamer2>(pair.second.pipeline));
             break;
         }
     }

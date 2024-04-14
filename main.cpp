@@ -262,6 +262,11 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 const char* dir = nullptr;
                 config_setting_lookup_string(streamerConfig, "dir", &dir);
 
+                const char* pipeline = nullptr;
+                if(CONFIG_TRUE == config_setting_lookup_string(streamerConfig, "pipeline", &pipeline)) {
+                   type = "pipeline";
+                }
+
                 StreamerConfig::Type streamerType;
                 if((type == nullptr && dir != nullptr) || 0 == g_strcmp0(type, "player"))
                     streamerType = StreamerConfig::Type::FilePlayer;
@@ -277,6 +282,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     streamerType = StreamerConfig::Type::FilePlayer;
                 else if(0 == strcmp(type, "proxy"))
                     streamerType = StreamerConfig::Type::Proxy;
+                else if(0 == strcmp(type, "pipeline"))
+                    streamerType = StreamerConfig::Type::Pipeline;
                 else {
                     Log()->warn("Unknown streamer type. Streamer skipped.");
                     break;
@@ -285,6 +292,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 if(streamerType != StreamerConfig::Type::Record &&
                    streamerType != StreamerConfig::Type::FilePlayer &&
                    streamerType != StreamerConfig::Type::Proxy &&
+                   streamerType != StreamerConfig::Type::Pipeline &&
                    !uri)
                 {
                     Log()->warn("Missing streamer uri. Streamer skipped.");
@@ -340,6 +348,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                         visibility,
                         streamerType,
                         streamerUri,
+                        pipeline ? pipeline : std::string(),
                         username ?
                             std::make_optional<std::string>(username) :
                             std::optional<std::string>(),
