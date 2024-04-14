@@ -73,6 +73,8 @@ server {
 
   ssl_certificate /etc/letsencrypt/live/$TARGET_DOMAIN/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/$TARGET_DOMAIN/privkey.pem;
+  include /etc/letsencrypt/options-ssl-nginx.conf;
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 
 # wss
@@ -96,6 +98,8 @@ server {
   listen 5555 ssl;
   ssl_certificate /etc/letsencrypt/live/$TARGET_DOMAIN/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/$TARGET_DOMAIN/privkey.pem;
+  include /etc/letsencrypt/options-ssl-nginx.conf;
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 
 EOF2
