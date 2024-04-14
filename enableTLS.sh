@@ -58,11 +58,11 @@ server {
   proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 
   location / {
-      proxy_pass http://localhost:5080/;
+      proxy_pass http://127.0.0.1:5080/;
   }
 
   location = /Config.js {
-    proxy_pass http://localhost:5080/Config.js;
+    proxy_pass http://127.0.0.1:5080/Config.js;
     sub_filter 'const WebRTSPPort = 5554;' 'const WebRTSPPort = 5555;';
     sub_filter_types text/javascript application/javascript;
     sub_filter_once on;
@@ -80,7 +80,7 @@ server {
   server_name $TARGET_DOMAIN;
 
   location / {
-      proxy_pass http://localhost:5554/;
+      proxy_pass http://127.0.0.1:5554/;
       proxy_http_version 1.1;
       proxy_set_header Upgrade \$http_upgrade;
       proxy_set_header Connection "Upgrade";
