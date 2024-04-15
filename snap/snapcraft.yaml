@@ -75,6 +75,10 @@ parts:
       - -Dgst-plugins-good:debugutils=enabled
       - -Dgst-plugins-good:multifile=enabled
       - -Dgst-plugins-good:isomp4=enabled
+      - -Dgst-plugins-good:v4l2=enabled
+      - -Dgst-plugins-good:v4l2-probe=true
+      - -Dgst-plugins-good:v4l2-libv4l2=auto
+      - -Dgst-plugins-good:v4l2-gudev=auto
       - -Dgst-plugins-bad:webrtc=enabled
       - -Dgst-plugins-bad:codectimestamper=enabled
       - -Dgst-plugins-bad:videoparsers=enabled
