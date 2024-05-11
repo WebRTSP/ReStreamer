@@ -27,6 +27,7 @@
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstPipelineStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstCameraStreamer.h"
+#include "RtStreaming/GstRtStreaming/GstV4L2Streamer.h"
 
 #include "Log.h"
 #include "Session.h"
@@ -658,6 +659,11 @@ int ReStreamerMain(
             mountPoints.emplace(
                 pair.first,
                 std::make_unique<GstCameraStreamer>());
+            break;
+        case StreamerConfig::Type::V4L2:
+            mountPoints.emplace(
+                pair.first,
+                std::make_unique<GstV4L2Streamer>());
             break;
         }
     }

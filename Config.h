@@ -59,6 +59,7 @@ struct StreamerConfig
         Proxy,
         Pipeline,
         Camera,
+        V4L2,
     };
 
     enum class Visibility {
