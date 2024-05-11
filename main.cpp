@@ -284,6 +284,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     streamerType = StreamerConfig::Type::Proxy;
                 else if(0 == strcmp(type, "pipeline"))
                     streamerType = StreamerConfig::Type::Pipeline;
+                else if(0 == strcmp(type, "camera"))
+                    streamerType = StreamerConfig::Type::Camera;
                 else {
                     Log()->warn("Unknown streamer type. Streamer skipped.");
                     break;
@@ -293,6 +295,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                    streamerType != StreamerConfig::Type::FilePlayer &&
                    streamerType != StreamerConfig::Type::Proxy &&
                    streamerType != StreamerConfig::Type::Pipeline &&
+                   streamerType != StreamerConfig::Type::Camera &&
                    !uri)
                 {
                     Log()->warn("Missing streamer uri. Streamer skipped.");

@@ -58,6 +58,7 @@ struct StreamerConfig
         FilePlayer,
         Proxy,
         Pipeline,
+        Camera,
     };
 
     enum class Visibility {

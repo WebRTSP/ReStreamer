@@ -26,6 +26,7 @@
 #include "RtStreaming/GstRtStreaming/ONVIF/ONVIFReStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstPipelineStreamer2.h"
+#include "RtStreaming/GstRtStreaming/GstCameraStreamer.h"
 
 #include "Log.h"
 #include "Session.h"
@@ -652,6 +653,11 @@ int ReStreamerMain(
             mountPoints.emplace(
                 pair.first,
                 std::make_unique<GstPipelineStreamer2>(pair.second.pipeline));
+            break;
+        case StreamerConfig::Type::Camera:
+            mountPoints.emplace(
+                pair.first,
+                std::make_unique<GstCameraStreamer>());
             break;
         }
     }
