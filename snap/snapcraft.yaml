@@ -1,0 +1,169 @@
+name: webrtsp-camera-streamer
+base: core24
+summary: Streams video from camera to browser
+adopt-info: restreamer
+description: |
+  Can be used to turn your Raspberry Pi with attached CSI-2 Camera into webcam.
+  Supports any camera device supported by libcamera.
+  Can act as remote Agent for WebRTSP server (https://snapcraft.io/rtsp-to-webrtsp)
+
+  To try, install snap and open http://localhost:5080 in your browser.
+
+  **Config file location:** /var/snap/webrtsp-camera-streamer/common/camera-streamer.conf
+
+license: GPL-3.0
+grade: devel
+confinement: strict
+
+platforms:
+  arm64:
+#  armhf: # libx264 requires exacstack on armhf
+#  amd64:
+
+layout:
+  /opt/${CRAFT_PROJECT_NAME}/lib:
+    symlink: $SNAP/opt/${CRAFT_PROJECT_NAME}/lib
+  /opt/${CRAFT_PROJECT_NAME}/share/libcamera:
+    symlink: $SNAP/opt/${CRAFT_PROJECT_NAME}/share/libcamera
+
+parts:
+  gstreamer:
+    plugin: meson
+    source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+    source-branch: 1.24
+    build-packages:
+      - meson
+      - ninja-build
+      - flex
+      - bison
+      - nasm
+      - libsrtp2-dev
+    meson-parameters:
+      - --prefix=/opt/${CRAFT_PROJECT_NAME}
+      - -Dauto_features=disabled
+      - -Dpython=disabled
+      - -Dlibav=disabled
+      - -Ddevtools=disabled
+      - -Drtsp_server=disabled
+      - -Dgst-examples=disabled
+      - -Dqt5=disabled
+      - -Dqt6=disabled
+      - -Dtests=disabled
+      - -Dexamples=disabled
+      - -Dintrospection=disabled
+      - -Dnls=disabled
+      - -Ddoc=disabled
+      - -Dgstreamer:ptp-helper-permissions=none
+      - -Dgpl=enabled
+      - -Dtools=enabled # required for orc
+      - -Dorc=enabled
+      - -Dorc-source=subproject
+      - -Dx264:asm=enabled
+      - -Dwebrtc=enabled
+      - -Dlibnice=enabled
+      - -Dlibnice:gupnp=auto
+      - -Dlibnice:gstreamer=enabled
+      - -Dlibnice:crypto-library=auto
+      - -Dgood=enabled
+      - -Dgst-plugins-good:rtpmanager=enabled
+      - -Dgst-plugins-good:udp=enabled
+      - -Dgst-plugins-good:rtp=enabled
+      - -Dgst-plugins-good:v4l2=enabled
+      - -Dgst-plugins-good:v4l2-probe=true
+      - -Dgst-plugins-good:v4l2-libv4l2=auto
+      - -Dgst-plugins-good:v4l2-gudev=auto
+      - -Dbad=enabled
+      - -Dgst-plugins-bad:webrtc=enabled
+      - -Dgst-plugins-bad:dtls=enabled
+      - -Dgst-plugins-bad:srtp=enabled
+      - -Dgst-plugins-bad:sctp=enabled
+      - -Dugly=enabled
+      - -Dgst-plugins-ugly:x264=enabled
+    stage-packages:
+      - libunwind8
+      - libdw1
+      - libgupnp-1.6-0
+      - libgupnp-igd-1.6-0
+      - libsrtp2-1
+  libcamera:
+    plugin: meson
+    source: https://github.com/raspberrypi/libcamera.git
+    source-branch: v0.3.1+rpt20240829
+    after:
+      - gstreamer
+    build-packages:
+      - meson
+      - g++
+      - ninja-build
+      - libyaml-dev
+      - python3-yaml
+      - python3-ply
+      - python3-jinja2
+      - libssl-dev
+      - openssl
+      - libevent-dev
+    build-environment:
+      - PKG_CONFIG_PATH: ${CRAFT_STAGE}/opt/${CRAFT_PROJECT_NAME}/lib/pkgconfig:${CRAFT_STAGE}/opt/${CRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_ON}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
+    meson-parameters:
+      - --prefix=/opt/${CRAFT_PROJECT_NAME}
+      - -Dcam=disabled
+      - -Ddocumentation=disabled
+      - -Dgstreamer=enabled
+      - -Dlc-compliance=disabled
+      - -Dpycamera=disabled
+      - -Dqcam=disabled
+      - -Dtest=false
+      - -Dtracing=disabled
+      - -Dudev=disabled
+    stage-packages:
+      - libevent-2.1-7
+      - libevent-pthreads-2.1-7
+  restreamer:
+    plugin: cmake
+    source-type: git
+    source: https://github.com/WebRTSP/ReStreamer.git
+    build-environment:
+      - PKG_CONFIG_PATH: ${CRAFT_STAGE}/opt/${CRAFT_PROJECT_NAME}/lib/pkgconfig:${CRAFT_STAGE}/opt/${CRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_ON}/pkgconfig:${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
+      - LD_LIBRARY_PATH: ${CRAFT_STAGE}/opt/${CRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_ON}:${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/opt/${CRAFT_PROJECT_NAME}
+      - -DCAMERA_STREAMER=ON
+    override-pull: |
+        craftctl default
+        craftctl set version="$(git describe --always)"
+    after:
+      - gstreamer
+      - libcamera
+    build-packages:
+      - g++
+      - make
+      - libspdlog-dev
+      - libconfig-dev
+      - libmicrohttpd-dev
+      - libwebsockets-dev
+    stage-packages:
+      - libconfig9
+      - libx264-164
+      - libspdlog1.12
+      - libmicrohttpd12
+      - libwebsockets19t64
+      - libwebsockets-evlib-glib
+apps:
+  CameraStreamer:
+    command: opt/${CRAFT_PROJECT_NAME}/bin/CameraStreamer
+    daemon: simple
+    plugs:
+      - network-bind
+      - network
+      - camera
+      - media-control
+      - opengl
+    environment:
+      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_ON}:${LD_LIBRARY_PATH}
+      LIBCAMERA_LOG_LEVELS: 4
+      GST_DEBUG: 2
+      GST_DEBUG_NO_COLOR: 1
+      GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_ON}/gstreamer-1.0
+      GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_ON}/gstreamer-1.0
+      GST_PLUGIN_SCANNER: $SNAP/opt/${SNAP_NAME}/libexec/gstreamer-1.0/gst-plugin-scanner

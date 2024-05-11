@@ -1,0 +1,3 @@
+#!/bin/sh -e
+
+cp "${SNAP}/opt/${SNAP_NAME}/etc/camera-streamer.conf.sample" "${SNAP_COMMON}/camera-streamer.conf"
