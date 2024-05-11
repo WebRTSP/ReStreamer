@@ -53,7 +53,9 @@ struct StreamerConfig
     enum class Type {
         Test,
         ReStreamer,
+#if ONVIF_SUPPORT
         ONVIFReStreamer,
+#endif
         Record,
         FilePlayer,
         Proxy,

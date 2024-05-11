@@ -23,7 +23,9 @@
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer2.h"
+#if ONVIF_SUPPORT
 #include "RtStreaming/GstRtStreaming/ONVIF/ONVIFReStreamer.h"
+#endif
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstPipelineStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstCameraStreamer.h"
@@ -622,6 +624,7 @@ int ReStreamerMain(
                     pair.second.uri,
                     pair.second.forceH264ProfileLevelId));
             break;
+#if ONVIF_SUPPORT
         case StreamerConfig::Type::ONVIFReStreamer:
             mountPoints.emplace(
                 pair.first,
@@ -631,6 +634,7 @@ int ReStreamerMain(
                     pair.second.username,
                     pair.second.password));
             break;
+#endif
         case StreamerConfig::Type::Record:
             if(pair.second.recordConfig) {
                 cleanupList.push_back(*pair.second.recordConfig);

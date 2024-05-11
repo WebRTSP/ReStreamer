@@ -4,9 +4,15 @@ set(CMAKE_CXX_STANDARD 14)
 
 project(ReStreamer)
 
+option(ONVIF_SUPPORT "ONVIF support" ON)
+
 if(DEFINED ENV{SNAPCRAFT_PROJECT_NAME})
     add_definitions(-DSNAPCRAFT_BUILD=1)
     set(SNAPCRAFT_BUILD YES)
+endif()
+
+if(ONVIF_SUPPORT)
+    add_definitions(-DONVIF_SUPPORT=1)
 endif()
 
 add_subdirectory(WebRTSP)
