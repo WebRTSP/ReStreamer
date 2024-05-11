@@ -23,7 +23,7 @@
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer2.h"
-#include "RtStreaming/GstRtStreaming/ONVIFReStreamer.h"
+#include "RtStreaming/GstRtStreaming/ONVIF/ONVIFReStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstPipelineStreamer2.h"
 
