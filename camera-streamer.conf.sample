@@ -1,0 +1,39 @@
+ws-port: 5554
+http-port: 5080
+
+#loopback-only: false
+
+// absolute or relative (based on %SNAP_COMMON% in case of snap package, or current dir in other cases) path
+// to custom web client
+#www-root: "www"
+
+// if defined app will act as remote agent
+#signalling-server: {
+#  host: "localhost"
+#  port: 5555
+#  tls: true
+#  uri: "proxy"
+#  token: "token"
+#}
+
+#realm = "CameraStreamer"
+
+# TLS is mandatory for authorization!
+#users: (
+#  {
+#    login: "user",
+#    pass: "pass"
+#  }
+#)
+
+webrtc: {
+#  stun-server: "stun://stun.l.google.com:19302"
+#  turn-server: "turn://username:password@host:port"
+#  min-rtp-port: 0
+#  rtp-ports-count: 65535
+}
+
+debug: {
+#  log-level: 3
+#  lws-log-level: 2
+}

@@ -29,6 +29,11 @@
 
 static const auto Log = ReStreamerLog;
 
+#if BUILD_AS_CAMERA_STREAMER
+#define CONFIG_FILE "camera-streamer.conf"
+#else
+#define CONFIG_FILE "restreamer.conf"
+#endif
 
 static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* basePath)
 {
@@ -44,7 +49,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     Config loadedConfig = *config;
 
     for(const std::string& configDir: configDirs) {
-        const std::string configFile = configDir + "/restreamer.conf";
+        const std::string configFile = configDir + "/" CONFIG_FILE;
         if(!g_file_test(configFile.c_str(), G_FILE_TEST_IS_REGULAR)) {
             Log()->info("Config \"{}\" not found", configFile);
             continue;
@@ -204,6 +209,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
+#if !BUILD_AS_CAMERA_STREAMER
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
         if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
             const int streamersCount = config_setting_length(streamersConfig);
@@ -380,6 +386,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 }
             }
         }
+#endif
 
         const char* realm = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "realm", &realm)) {
@@ -413,6 +420,23 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
     }
+
+#if BUILD_AS_CAMERA_STREAMER
+    loadedConfig.streamers.emplace(
+        "Camera",
+        StreamerConfig {
+            .restream = true,
+            .visibility = StreamerConfig::Visibility::Auto,
+            .type = StreamerConfig::Type::Camera,
+            .uri = std::string(),
+            .pipeline = std::string(),
+            .username = std::optional<std::string>(),
+            .password = std::optional<std::string>(),
+            .remoteAgentToken = std::string(),
+            .description = std::string(),
+            .forceH264ProfileLevelId = std::string(),
+            .recordConfig = std::optional<RecordConfig>() });
+#endif
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();
 

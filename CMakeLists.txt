@@ -4,11 +4,17 @@ set(CMAKE_CXX_STANDARD 14)
 
 project(ReStreamer)
 
+option(CAMERA_STREAMER "Build as camera streamer app" OFF)
 option(ONVIF_SUPPORT "ONVIF support" ON)
 
 if(DEFINED ENV{SNAPCRAFT_PROJECT_NAME})
     add_definitions(-DSNAPCRAFT_BUILD=1)
     set(SNAPCRAFT_BUILD YES)
+endif()
+
+if(CAMERA_STREAMER)
+    add_definitions(-DBUILD_AS_CAMERA_STREAMER=1)
+    set(ONVIF_SUPPORT OFF CACHE BOOL "ONVIF not used by camera streamer" FORCE)
 endif()
 
 if(ONVIF_SUPPORT)
@@ -50,10 +56,17 @@ target_link_libraries(${PROJECT_NAME}
     Client
     Signalling
     RtStreaming)
+if(CAMERA_STREAMER)
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "CameraStreamer")
+endif()
 
 if(SNAPCRAFT_BUILD)
     install(TARGETS ${PROJECT_NAME} DESTINATION bin)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/restreamer.conf.sample DESTINATION etc)
+    if(CAMERA_STREAMER)
+        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/camera-streamer.conf.sample DESTINATION etc)
+    else()
+        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/restreamer.conf.sample DESTINATION etc)
+    endif()
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/www
         DESTINATION /opt/$ENV{SNAPCRAFT_PROJECT_NAME}
         FILES_MATCHING
