@@ -667,7 +667,7 @@ int ReStreamerMain(
         case StreamerConfig::Type::V4L2:
             mountPoints.emplace(
                 pair.first,
-                std::make_unique<GstV4L2Streamer>());
+                std::make_unique<GstV4L2Streamer>(pair.second.edidFilePath));
             break;
         }
     }

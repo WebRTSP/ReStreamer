@@ -31,6 +31,8 @@ static const auto Log = ReStreamerLog;
 
 #if BUILD_AS_CAMERA_STREAMER
 #define CONFIG_FILE "camera-streamer.conf"
+#elif BUILD_AS_V4L2_STREAMER
+#define CONFIG_FILE "v4l2-streamer.conf"
 #else
 #define CONFIG_FILE "restreamer.conf"
 #endif
@@ -48,6 +50,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     http::Config loadedHttpConfig = *httpConfig;
     Config loadedConfig = *config;
 
+#if BUILD_AS_V4L2_STREAMER
+    std::optional<std::string> edidFilePath;
+#endif
     for(const std::string& configDir: configDirs) {
         const std::string configFile = configDir + "/" CONFIG_FILE;
         if(!g_file_test(configFile.c_str(), G_FILE_TEST_IS_REGULAR)) {
@@ -209,7 +214,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
-#if !BUILD_AS_CAMERA_STREAMER
+#if !BUILD_AS_CAMERA_STREAMER && !BUILD_AS_V4L2_STREAMER
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
         if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
             const int streamersCount = config_setting_length(streamersConfig);
@@ -388,6 +393,15 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         }
 #endif
 
+#if BUILD_AS_V4L2_STREAMER
+        const char* edidFile = nullptr;
+        if(CONFIG_TRUE == config_lookup_string(&config, "edid-file", &edidFile)) {
+            edidFilePath = !basePath || g_path_is_absolute(edidFile) != FALSE ?
+                std::filesystem::path(edidFile) :
+                std::filesystem::path(basePath) / edidFile;
+        }
+#endif
+
         const char* realm = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "realm", &realm)) {
             loadedHttpConfig.realm = realm;
@@ -436,6 +450,22 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             .description = std::string(),
             .forceH264ProfileLevelId = std::string(),
             .recordConfig = std::optional<RecordConfig>() });
+#elif BUILD_AS_V4L2_STREAMER
+    loadedConfig.streamers.emplace(
+        "V4L2",
+        StreamerConfig {
+            .restream = true,
+            .visibility = StreamerConfig::Visibility::Auto,
+            .type = StreamerConfig::Type::V4L2,
+            .uri = std::string(),
+            .pipeline = std::string(),
+            .username = std::optional<std::string>(),
+            .password = std::optional<std::string>(),
+            .remoteAgentToken = std::string(),
+            .description = std::string(),
+            .forceH264ProfileLevelId = std::string(),
+            .recordConfig = std::optional<RecordConfig>(),
+            .edidFilePath = edidFilePath });
 #endif
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();

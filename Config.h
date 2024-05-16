@@ -81,6 +81,7 @@ struct StreamerConfig
     std::string description;
     std::string forceH264ProfileLevelId;
     std::optional<RecordConfig> recordConfig;
+    std::optional<std::string> edidFilePath;
 };
 
 struct Config : public signalling::Config
