@@ -662,12 +662,19 @@ int ReStreamerMain(
         case StreamerConfig::Type::Camera:
             mountPoints.emplace(
                 pair.first,
-                std::make_unique<GstCameraStreamer>());
+                std::make_unique<GstCameraStreamer>(
+                    std::optional<GstCameraStreamer::VideoResolution>(),
+                    std::optional<std::string>(),
+                    pair.second.useHwEncoder));
             break;
         case StreamerConfig::Type::V4L2:
             mountPoints.emplace(
                 pair.first,
-                std::make_unique<GstV4L2Streamer>(pair.second.edidFilePath));
+                std::make_unique<GstV4L2Streamer>(
+                    pair.second.edidFilePath,
+                    std::optional<GstV4L2Streamer::VideoResolution>(),
+                    std::optional<std::string>(),
+                    pair.second.useHwEncoder));
             break;
         }
     }

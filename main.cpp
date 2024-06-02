@@ -50,6 +50,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     http::Config loadedHttpConfig = *httpConfig;
     Config loadedConfig = *config;
 
+#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
+    bool useHwEncoder = true;
+#endif
 #if BUILD_AS_V4L2_STREAMER
     std::optional<std::string> edidFilePath;
 #endif
@@ -393,6 +396,13 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         }
 #endif
 
+#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
+        int useHwEncoderTmp = TRUE;
+        if(CONFIG_TRUE == config_lookup_bool(&config, "use-hw-encoder", &useHwEncoderTmp)) {
+            useHwEncoder = useHwEncoderTmp != FALSE;
+        }
+#endif
+
 #if BUILD_AS_V4L2_STREAMER
         const char* edidFile = nullptr;
         if(CONFIG_TRUE == config_lookup_string(&config, "edid-file", &edidFile)) {
@@ -449,7 +459,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             .remoteAgentToken = std::string(),
             .description = std::string(),
             .forceH264ProfileLevelId = std::string(),
-            .recordConfig = std::optional<RecordConfig>() });
+            .recordConfig = std::optional<RecordConfig>(),
+            .useHwEncoder = useHwEncoder });
 #elif BUILD_AS_V4L2_STREAMER
     loadedConfig.streamers.emplace(
         "V4L2",
@@ -465,7 +476,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             .description = std::string(),
             .forceH264ProfileLevelId = std::string(),
             .recordConfig = std::optional<RecordConfig>(),
-            .edidFilePath = edidFilePath });
+            .edidFilePath = edidFilePath,
+            .useHwEncoder = useHwEncoder });
 #endif
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();

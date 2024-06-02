@@ -82,6 +82,7 @@ struct StreamerConfig
     std::string forceH264ProfileLevelId;
     std::optional<RecordConfig> recordConfig;
     std::optional<std::string> edidFilePath;
+    bool useHwEncoder = true;
 };
 
 struct Config : public signalling::Config
