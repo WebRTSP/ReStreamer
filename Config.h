@@ -70,9 +70,9 @@ struct StreamerConfig
         Protected, // Accessible only for authenticated users
     };
 
-    bool restream;
-    Visibility visibility;
     Type type;
+    bool restream = true;
+    Visibility visibility = Visibility::Protected;
     std::string uri;
     std::string pipeline;
     std::optional<std::string> username;
