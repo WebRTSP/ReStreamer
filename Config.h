@@ -30,6 +30,16 @@ struct SignallingServer : public client::Config
     std::string token;
 };
 
+struct CameraConfig
+{
+    struct Resolution {
+        unsigned width;
+        unsigned height;
+    };
+    std::optional<Resolution> resolution;
+    std::optional<unsigned> framerate;
+};
+
 struct RecordConfig
 {
     enum: uint64_t {
@@ -82,6 +92,7 @@ struct StreamerConfig
     std::string forceH264ProfileLevelId;
     std::optional<RecordConfig> recordConfig;
     std::optional<std::string> edidFilePath;
+    std::optional<CameraConfig> cameraConfig;
     bool useHwEncoder = true;
 };
 

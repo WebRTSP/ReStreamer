@@ -51,11 +51,16 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     Config loadedConfig = *config;
 
 #if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
-    bool useHwEncoder = true;
+    StreamerConfig streamerConfig;
+    streamerConfig.visibility = StreamerConfig::Visibility::Auto;
 #endif
-#if BUILD_AS_V4L2_STREAMER
-    std::optional<std::string> edidFilePath;
+
+#if BUILD_AS_CAMERA_STREAMER
+    streamerConfig.type = StreamerConfig::Type::Camera;
+#elif BUILD_AS_V4L2_STREAMER
+    streamerConfig.type = StreamerConfig::Type::V4L2;
 #endif
+
     for(const std::string& configDir: configDirs) {
         const std::string configFile = configDir + "/" CONFIG_FILE;
         if(!g_file_test(configFile.c_str(), G_FILE_TEST_IS_REGULAR)) {
@@ -396,19 +401,54 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         }
 #endif
 
-#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
-        int useHwEncoderTmp = TRUE;
-        if(CONFIG_TRUE == config_lookup_bool(&config, "use-hw-encoder", &useHwEncoderTmp)) {
-            useHwEncoder = useHwEncoderTmp != FALSE;
+#if BUILD_AS_CAMERA_STREAMER
+        config_setting_t* cameraConfig = config_lookup(&config, "camera");
+        if(cameraConfig && CONFIG_TRUE == config_setting_is_group(cameraConfig)) {
+            streamerConfig.cameraConfig = CameraConfig();
+
+            int width;
+            int height;
+            const bool widthPresent =
+                CONFIG_TRUE == config_setting_lookup_int(cameraConfig, "width", &width);
+            const bool heightPresent =
+                CONFIG_TRUE == config_setting_lookup_int(cameraConfig, "height", &height);
+
+            if(widthPresent && heightPresent) {
+                if(width <= 0)
+                    Log()->warn("\"width\" should be positive. Skipped.");
+                else if(height <= 0 )
+                    Log()->warn("\"height\" should be positive. Skipped.");
+                else {
+                    streamerConfig.cameraConfig->resolution =
+                        CameraConfig::Resolution {
+                            static_cast<unsigned>(width),
+                            static_cast<unsigned>(height) };
+                }
+            } else if(widthPresent != heightPresent) {
+                Log()->warn("Both \"width\" and \"height\" should be present. Skipped.");
+            }
+
+            int framerate;
+            if(CONFIG_TRUE == config_setting_lookup_int(cameraConfig, "framerate", &framerate)) {
+                if(framerate > 0)
+                    streamerConfig.cameraConfig->framerate = framerate;
+                else
+                    Log()->warn("\"framerate\" should be positive. Skipped.");
+            }
+        }
+#elif BUILD_AS_V4L2_STREAMER
+        const char* edidFilePath;
+        if(CONFIG_TRUE == config_lookup_string(&config, "edid-file", &edidFilePath)) {
+            streamerConfig.edidFilePath = !basePath || g_path_is_absolute(edidFilePath) != FALSE ?
+                std::filesystem::path(edidFilePath) :
+                std::filesystem::path(basePath) / edidFilePath;
         }
 #endif
 
-#if BUILD_AS_V4L2_STREAMER
-        const char* edidFile = nullptr;
-        if(CONFIG_TRUE == config_lookup_string(&config, "edid-file", &edidFile)) {
-            edidFilePath = !basePath || g_path_is_absolute(edidFile) != FALSE ?
-                std::filesystem::path(edidFile) :
-                std::filesystem::path(basePath) / edidFile;
+#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
+        int useHwEncoder;
+        if(CONFIG_TRUE == config_lookup_bool(&config, "use-hw-encoder", &useHwEncoder)) {
+            streamerConfig.useHwEncoder = useHwEncoder != FALSE;
         }
 #endif
 
@@ -448,36 +488,11 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
 #if BUILD_AS_CAMERA_STREAMER
     loadedConfig.streamers.emplace(
         "Camera",
-        StreamerConfig {
-            .restream = true,
-            .visibility = StreamerConfig::Visibility::Auto,
-            .type = StreamerConfig::Type::Camera,
-            .uri = std::string(),
-            .pipeline = std::string(),
-            .username = std::optional<std::string>(),
-            .password = std::optional<std::string>(),
-            .remoteAgentToken = std::string(),
-            .description = std::string(),
-            .forceH264ProfileLevelId = std::string(),
-            .recordConfig = std::optional<RecordConfig>(),
-            .useHwEncoder = useHwEncoder });
+        streamerConfig);
 #elif BUILD_AS_V4L2_STREAMER
     loadedConfig.streamers.emplace(
         "V4L2",
-        StreamerConfig {
-            .restream = true,
-            .visibility = StreamerConfig::Visibility::Auto,
-            .type = StreamerConfig::Type::V4L2,
-            .uri = std::string(),
-            .pipeline = std::string(),
-            .username = std::optional<std::string>(),
-            .password = std::optional<std::string>(),
-            .remoteAgentToken = std::string(),
-            .description = std::string(),
-            .forceH264ProfileLevelId = std::string(),
-            .recordConfig = std::optional<RecordConfig>(),
-            .edidFilePath = edidFilePath,
-            .useHwEncoder = useHwEncoder });
+        streamerConfig);
 #endif
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();

@@ -7,6 +7,12 @@ http-port: 5080
 // to custom web client
 #www-root: "www"
 
+camera: {
+  width: 1280
+  height: 720
+  framerate: 30
+}
+
 // it should be =false on Raspberry Pi 5 (or any other device without hardware h264 enconding support)
 #use-hw-encoder=true
 

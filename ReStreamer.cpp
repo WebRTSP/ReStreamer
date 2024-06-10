@@ -659,14 +659,27 @@ int ReStreamerMain(
                 pair.first,
                 std::make_unique<GstPipelineStreamer2>(pair.second.pipeline));
             break;
-        case StreamerConfig::Type::Camera:
+        case StreamerConfig::Type::Camera: {
+            const std::optional<CameraConfig>& cameraConfig = pair.second.cameraConfig;
+            std::optional<GstCameraStreamer::VideoResolution> resolution;
+            std::optional<unsigned> framerate;
+            if(cameraConfig) {
+                if(cameraConfig->resolution) {
+                    resolution = GstCameraStreamer::VideoResolution {
+                        cameraConfig->resolution->width,
+                        cameraConfig->resolution->height };
+                }
+                framerate = cameraConfig->framerate;
+            }
             mountPoints.emplace(
                 pair.first,
                 std::make_unique<GstCameraStreamer>(
-                    std::optional<GstCameraStreamer::VideoResolution>(),
+                    resolution,
+                    framerate,
                     std::optional<std::string>(),
                     pair.second.useHwEncoder));
             break;
+        }
         case StreamerConfig::Type::V4L2:
             mountPoints.emplace(
                 pair.first,
