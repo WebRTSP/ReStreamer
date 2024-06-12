@@ -371,9 +371,9 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 loadedConfig.streamers.emplace(
                     escapedName,
                     StreamerConfig {
+                        streamerType,
                         restream != FALSE,
                         visibility,
-                        streamerType,
                         streamerUri,
                         pipeline ? pipeline : std::string(),
                         username ?
