@@ -97,6 +97,11 @@ struct StreamerConfig
     bool useHwEncoder = true;
 };
 
+struct AgentsConfig
+{
+    WebRTCConfig::IceServers iceServers;
+};
+
 struct Config : public signalling::Config
 {
     spdlog::level::level_enum logLevel = spdlog::level::info;
@@ -108,6 +113,8 @@ struct Config : public signalling::Config
     bool authRequired = true;
 
     std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();
+
+    AgentsConfig agentsConfig;
 
     bool useAgentMode() const { return signallingServer.has_value(); }
 };

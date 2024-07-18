@@ -138,6 +138,11 @@ webrtc: {
 #  rtp-ports-count: 65535
 }
 
+agents: {
+#  stun-server: "stun://stun.l.google.com:19302"
+#  turn-server: "turn://username:password@host:port"
+}
+
 debug: {
 #  log-level: 3
 #  lws-log-level: 2

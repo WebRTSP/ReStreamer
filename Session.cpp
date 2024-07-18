@@ -3,6 +3,7 @@
 #include <glib.h>
 
 #include "RtspParser/RtspParser.h"
+#include "RtspParser/RtspSerialize.h"
 
 #include "Log.h"
 
@@ -220,6 +221,49 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
     }
 
     return ServerSession::authorize(requestPtr);
+}
+
+bool Session::onGetParameterRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    const std::string& contentType = rtsp::RequestContentType(*requestPtr);
+
+    if(contentType.empty())
+        return ServerSession::onGetParameterRequest(requestPtr);
+
+    if(contentType != rtsp::TextParametersContentType)
+        return false;
+
+    const bool agentAuthorized = authorizeAgent(requestPtr);
+    if(!agentAuthorized)
+        return false;
+
+    rtsp::ParametersNames names;
+    if(!rtsp::ParseParametersNames(requestPtr->body, &names))
+        return false;
+
+    auto nameIt = names.find("ice-servers");
+    if(names.end() == nameIt)
+        return false;
+
+    const AgentsConfig& agentsConfig = _config->agentsConfig;
+    rtsp::Parameters parameters;
+
+    for(const std::string& iceServer: agentsConfig.iceServers) {
+        if(0 == iceServer.compare(0, 5, "stun:"))
+            parameters.emplace("stun-server", iceServer);
+        else if(0 == iceServer.compare(0, 5, "turn:"))
+            parameters.emplace("turn-server", iceServer);
+        else if(0 == iceServer.compare(0, 6, "turns:"))
+            parameters.emplace("turns-server", iceServer);
+    }
+
+    std::string body;
+    rtsp::Serialize(parameters, &body);
+
+    sendOkResponse(requestPtr->cseq, rtsp::MediaSessionId(), rtsp::TextParametersContentType, body);
+
+    return true;
 }
 
 bool Session::listEnabled(const std::string& uri) noexcept

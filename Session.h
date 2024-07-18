@@ -40,6 +40,8 @@ protected:
     bool isValidCookie(const std::optional<std::string>& authCookie) noexcept;
     bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
 
+    bool onGetParameterRequest(
+        std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onListRequest(
         std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSubscribeRequest(

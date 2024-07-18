@@ -179,6 +179,27 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
+        config_setting_t* agentsConfig = config_lookup(&config, "agents");
+        if(agentsConfig && CONFIG_TRUE == config_setting_is_group(agentsConfig)) {
+            const char* agentsStunServer = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(agentsConfig, "stun-server", &agentsStunServer)) {
+                if(0 == g_ascii_strncasecmp(agentsStunServer, "stun://", 7)) {
+                    loadedConfig.agentsConfig.iceServers.emplace_back(agentsStunServer);
+                } else {
+                    Log()->error("STUN server URL should start with \"stun://\"");
+                }
+            }
+
+            const char* agentsTurnServer = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(agentsConfig, "turn-server", &agentsTurnServer)) {
+               if(0 == g_ascii_strncasecmp(agentsTurnServer, "turn://", 7)) {
+                    loadedConfig.agentsConfig.iceServers.emplace_back(agentsTurnServer);
+                } else {
+                    Log()->error("TURN server URL should start with \"turn://\"");
+               }
+            }
+        }
+
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
             int logLevel = 0;
