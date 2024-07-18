@@ -108,4 +108,6 @@ struct Config : public signalling::Config
     bool authRequired = true;
 
     std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();
+
+    bool useAgentMode() const { return signallingServer.has_value(); }
 };

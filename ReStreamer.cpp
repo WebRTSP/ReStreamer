@@ -718,7 +718,8 @@ int ReStreamerMain(
 
     std::unique_ptr<signalling::WsServer> serverPtr;
     std::unique_ptr<client::WsClient> signallingClient;
-    if(config.signallingServer) {
+    if(config.useAgentMode()) {
+        assert(config.signallingServer.has_value());
         signallingClient = std::make_unique<client::WsClient>(
             *config.signallingServer,
             loop,
@@ -750,7 +751,7 @@ int ReStreamerMain(
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
 #if NDEBUG
-    if(httpConfig.port && !config.signallingServer) {
+    if(httpConfig.port && !config.useAgentMode()) {
 #else
     if(httpConfig.port) {
 #endif
