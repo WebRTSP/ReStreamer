@@ -555,6 +555,7 @@ int main(int argc, char *argv[])
 
     basePath = g_getenv("SNAP_COMMON");
 #endif
+
     Config config {};
     config.bindToLoopbackOnly = false;
     if(!LoadConfig(&httpConfig, &config, basePath))
