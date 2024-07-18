@@ -31,6 +31,7 @@ find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 pkg_search_module(LIBCONFIG REQUIRED libconfig)
+pkg_search_module(LIBNICE REQUIRED nice)
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
@@ -51,10 +52,12 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${SNAP} ${WWW})
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/WebRTSP
     ${LIBCONFIG_INCLUDE_DIRS}
-    ${SPDLOG_INCLUDE_DIRS})
+    ${SPDLOG_INCLUDE_DIRS}
+    ${LIBNICE_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
     ${LIBCONFIG_LIBRARIES}
     ${SPDLOG_LDFLAGS}
+    ${LIBNICE_LDFLAGS}
     Http
     RtspParser
     Client
