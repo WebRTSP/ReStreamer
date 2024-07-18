@@ -141,42 +141,18 @@ bool Session::subscribeEnabled(const std::string& uri) noexcept
         it->second.type == StreamerConfig::Type::Record;
 }
 
-bool Session::authorizeRecord(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool Session::authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    if(requestPtr->method != rtsp::Method::RECORD)
-        return false;
-
     auto it = _config->streamers.find(requestPtr->uri);
     if(it == _config->streamers.end())
         return false;
 
-    if(it->second.type != StreamerConfig::Type::Record)
+    switch(it->second.type) {
+    case StreamerConfig::Type::Record:
+    case StreamerConfig::Type::Proxy:
+        break;
+    default:
         return false;
-
-    if(it->second.remoteAgentToken.empty())
-        return true;
-
-    const std::pair<rtsp::Authentication, std::string> authPair =
-        rtsp::ParseAuthentication(*requestPtr);
-
-    if(authPair.first != rtsp::Authentication::Bearer) // FIXME? only Bearer supported atm
-        return false;
-
-    return authPair.second == it->second.remoteAgentToken;
-}
-
-bool Session::authorizeAgentList(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
-{
-    if(requestPtr->method != rtsp::Method::LIST)
-        return false;
-
-    auto it = _config->streamers.find(requestPtr->uri);
-    if(it == _config->streamers.end())
-        return false;
-
-    if(it->second.type != StreamerConfig::Type::Proxy) {
-        const std::string& contentType = rtsp::RequestContentType(*requestPtr);
-        return contentType.empty() && requestPtr->body.empty();
     }
 
     if(it->second.remoteAgentToken.empty())
@@ -230,10 +206,10 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
 
     switch(requestPtr->method) {
     case rtsp::Method::RECORD:
-        return authorizeRecord(requestPtr);
+        return authorizeAgent(requestPtr);
     case rtsp::Method::LIST:
         if(!rtsp::RequestContentType(*requestPtr).empty())
-            return authorizeAgentList(requestPtr);
+            return authorizeAgent(requestPtr);
         else if(authRequired())
             return isValidCookie(authCookie());
     case rtsp::Method::SUBSCRIBE:

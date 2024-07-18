@@ -36,8 +36,7 @@ protected:
     bool playEnabled(const std::string& uri) noexcept override;
     bool recordEnabled(const std::string& uri) noexcept override;
     bool subscribeEnabled(const std::string& uri) noexcept override;
-    bool authorizeRecord(const std::unique_ptr<rtsp::Request>&) noexcept;
-    bool authorizeAgentList(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
+    bool authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
     bool isValidCookie(const std::optional<std::string>& authCookie) noexcept;
     bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
 
