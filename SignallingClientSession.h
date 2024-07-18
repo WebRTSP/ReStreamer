@@ -19,7 +19,20 @@ public:
 
     bool onConnected() noexcept override;
 
+protected:
+    const WebRTCConfigPtr& webRTCConfig() const override { return _webRTCConfig; }
+
+    bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+
+    bool onGetParameterResponse(
+        const rtsp::Request&,
+        const rtsp::Response&) noexcept override;
+
 private:
     const Config *const _config;
+    WebRTCConfigPtr _webRTCConfig;
     const SharedData *const _sharedData;
+
+    std::optional<rtsp::CSeq> _iceServersRequest;
+    std::deque<std::unique_ptr<rtsp::Request>> _pendingRequests;
 };
