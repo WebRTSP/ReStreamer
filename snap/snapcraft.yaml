@@ -101,6 +101,14 @@ parts:
       - libglib2.0-dev
     stage-packages:
       - libssl3
+  coturn:
+    plugin: dump
+    source: .
+    organize:
+        coturn.sh: opt/${SNAPCRAFT_PROJECT_NAME}/bin/
+    stage-packages:
+      - coturn
+      - pwgen
   restreamer:
     plugin: cmake
     source-type: git
@@ -145,3 +153,13 @@ apps:
       GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
       GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/opt/${SNAP_NAME}/libexec/gstreamer-1.0/gst-plugin-scanner
+  Coturn:
+    command: opt/${SNAPCRAFT_PROJECT_NAME}/bin/coturn.sh
+    daemon: simple
+    plugs:
+      - network-bind
+      - network
+    install-mode: disable
+    restart-delay: 3s
+    after:
+      - ReStreamer

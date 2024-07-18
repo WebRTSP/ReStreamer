@@ -139,6 +139,7 @@ webrtc: {
 }
 
 agents: {
+#  use-coturn: true
 #  stun-server: "stun://stun.l.google.com:19302"
 #  turn-server: "turn://username:password@host:port"
 }

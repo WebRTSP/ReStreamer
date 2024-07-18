@@ -1,3 +1,4 @@
 #!/bin/sh -e
 
+touch "$SNAP_COMMON/turnserver.conf"
 cp "$SNAP/opt/$SNAP_NAME/etc/restreamer.conf.sample" "$SNAP_COMMON/restreamer.conf"

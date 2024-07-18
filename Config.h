@@ -4,6 +4,7 @@
 #include <deque>
 #include <map>
 #include <optional>
+#include <chrono>
 #include <filesystem>
 
 #include <spdlog/common.h>
@@ -100,6 +101,20 @@ struct StreamerConfig
 struct AgentsConfig
 {
     WebRTCConfig::IceServers iceServers;
+
+#ifdef SNAPCRAFT_BUILD
+    bool useCoturn = true;
+#else
+    bool useCoturn = false;
+#endif
+};
+
+struct CoturnConfig
+{
+    std::string realm = "WebRTSP/ReStreamer";
+    uint16_t port = 3478;
+    std::optional<std::string> staticAuthSecret;
+    std::chrono::seconds passwordTTL = std::chrono::hours(1);
 };
 
 struct Config : public signalling::Config
@@ -114,7 +129,11 @@ struct Config : public signalling::Config
 
     std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();
 
+    std::optional<std::string> publicIp;
+
     AgentsConfig agentsConfig;
+
+    CoturnConfig coturnConfig;
 
     bool useAgentMode() const { return signallingServer.has_value(); }
 };
