@@ -137,6 +137,7 @@ apps:
     plugs:
       - network-bind
       - network
+    restart-delay: 3s
     environment:
       LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:$LD_LIBRARY_PATH
       GST_DEBUG: 2
