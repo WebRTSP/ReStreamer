@@ -136,4 +136,5 @@ struct Config : public signalling::Config
     CoturnConfig coturnConfig;
 
     bool useAgentMode() const { return signallingServer.has_value(); }
+    bool useServerMode() const { return !signallingServer.has_value(); }
 };

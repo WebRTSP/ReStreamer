@@ -732,11 +732,8 @@ int ReStreamerMain(
                 std::placeholders::_2),
             std::bind(ClientDisconnected, std::placeholders::_1));
     }
-#if NDEBUG
-    else {
-#else
-    {
-#endif
+
+    if(config.useServerMode()) {
         serverPtr = std::make_unique<signalling::WsServer>(
             config,
             loop,
@@ -750,11 +747,7 @@ int ReStreamerMain(
     }
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
-#if NDEBUG
-    if(httpConfig.port && !config.useAgentMode()) {
-#else
-    if(httpConfig.port) {
-#endif
+    if(config.useServerMode() && httpConfig.port) {
         httpServerPtr =
             std::make_unique<http::MicroServer>(
                 httpConfig,

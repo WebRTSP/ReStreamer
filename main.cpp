@@ -587,7 +587,7 @@ static bool StopCoturn(bool disable)
 
 static void ConfigureCoturn(Config* config)
 {
-    assert(!config->useAgentMode() && config->agentsConfig.useCoturn);
+    assert(config->useServerMode() && config->agentsConfig.useCoturn);
 
     const gchar* snapName = g_getenv("SNAP_NAME");
     if(!snapName) {
@@ -718,7 +718,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if(!config.useAgentMode())
+    if(config.useServerMode())
         config.publicIp = DetectPublicIP(*config.webRTCConfig);
 
 #ifdef SNAPCRAFT_BUILD
