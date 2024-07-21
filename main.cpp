@@ -677,7 +677,7 @@ static void ConfigureCoturn(Config* config)
 
     Log()->info("Coturn configured and started");
 
-    config->coturnConfig.staticAuthSecret->swap(staticAuthSecret);
+    config->coturnConfig.staticAuthSecret.emplace(std::move(staticAuthSecret));
 }
 
 int main(int argc, char *argv[])
