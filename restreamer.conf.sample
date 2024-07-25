@@ -8,12 +8,14 @@ http-port: 5080
 #www-root: "www"
 
 // if defined app will act as remote agent
+// but with "disable-own-server: false" will act as both remote agent and server
 #signalling-server: {
 #  host: "localhost"
 #  port: 5555
 #  tls: true
 #  uri: "proxy"
 #  token: "token"
+#  disable-own-server: true
 #}
 
 streamers: (

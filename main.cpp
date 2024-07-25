@@ -232,10 +232,12 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             const char* uri = nullptr;
             const char* token = nullptr;
             int useTls = TRUE;
+            int disableOwnServer = TRUE;
             config_setting_lookup_string(signallingServerConfig, "host", &host);
             config_setting_lookup_string(signallingServerConfig, "uri", &uri);
             config_setting_lookup_string(signallingServerConfig, "token", &token);
             config_setting_lookup_bool(signallingServerConfig, "tls", &useTls);
+            config_setting_lookup_bool(signallingServerConfig, "disable-own-server", &disableOwnServer);
             if(host && uri) {
                 g_autofree gchar* escapedUri = g_uri_escape_string(uri, nullptr, false);
                 SignallingServer signallingServer(host, escapedUri, token, useTls);
@@ -246,6 +248,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     signallingServer.serverPort = port;
 
                 loadedConfig.signallingServer = signallingServer;
+
+                loadedConfig.forceServerMode = disableOwnServer == FALSE;
             }
         }
 

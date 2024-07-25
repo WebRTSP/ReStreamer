@@ -123,6 +123,7 @@ struct Config : public signalling::Config
     spdlog::level::level_enum lwsLogLevel = spdlog::level::warn;
 
     std::optional<SignallingServer> signallingServer;
+    bool forceServerMode = false;
 
     std::map<std::string, StreamerConfig> streamers; // escaped streamer name -> StreamerConfig
     bool authRequired = true;
@@ -136,5 +137,5 @@ struct Config : public signalling::Config
     CoturnConfig coturnConfig;
 
     bool useAgentMode() const { return signallingServer.has_value(); }
-    bool useServerMode() const { return !signallingServer.has_value(); }
+    bool useServerMode() const { return !signallingServer.has_value() || forceServerMode; }
 };
