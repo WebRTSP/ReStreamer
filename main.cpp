@@ -230,21 +230,23 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         if(signallingServerConfig && CONFIG_TRUE == config_setting_is_group(signallingServerConfig)) {
             const char* host = nullptr;
             const char* uri = nullptr;
-            const char* token = nullptr;
-            int useTls = TRUE;
-            int disableOwnServer = TRUE;
             config_setting_lookup_string(signallingServerConfig, "host", &host);
             config_setting_lookup_string(signallingServerConfig, "uri", &uri);
-            config_setting_lookup_string(signallingServerConfig, "token", &token);
-            config_setting_lookup_bool(signallingServerConfig, "tls", &useTls);
-            config_setting_lookup_bool(signallingServerConfig, "disable-own-server", &disableOwnServer);
             if(host && uri) {
+                int port = 0;
+                int useTls = TRUE;
+                const char* token = nullptr;
+                int disableOwnServer = TRUE;
+
+                config_setting_lookup_int(signallingServerConfig, "port", &port);
+                config_setting_lookup_bool(signallingServerConfig, "tls", &useTls);
+                config_setting_lookup_string(signallingServerConfig, "token", &token);
+                config_setting_lookup_bool(signallingServerConfig, "disable-own-server", &disableOwnServer);
+
                 g_autofree gchar* escapedUri = g_uri_escape_string(uri, nullptr, false);
                 SignallingServer signallingServer(host, escapedUri, token, useTls);
 
-                int port = 0;
-                config_setting_lookup_int(signallingServerConfig, "port", &port);
-                if(port > 0 )
+                if(port > 0)
                     signallingServer.serverPort = port;
 
                 loadedConfig.signallingServer = signallingServer;
