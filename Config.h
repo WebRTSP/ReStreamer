@@ -22,7 +22,10 @@ struct SignallingServer : public client::Config
         const std::string& uri,
         const std::string& token,
         bool useTls) :
-        client::Config {server, signalling::Config().port, useTls},
+        client::Config {
+            server,
+            useTls ? signalling::DEFAULT_WSS_PORT : signalling::DEFAULT_WS_PORT,
+            useTls },
         uri(uri),
         token(token)
     {
