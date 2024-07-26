@@ -263,15 +263,15 @@ bool Session::onGetParameterRequest(
                 coturnConfig.staticAuthSecret.value(),
                 "turn://",
                 coturnEndpoint));
-    } else {
-        for(const std::string& iceServer: agentsConfig.iceServers) {
-            if(0 == iceServer.compare(0, 5, "stun:"))
-                parameters.emplace("stun-server", iceServer);
-            else if(0 == iceServer.compare(0, 5, "turn:"))
-                parameters.emplace("turn-server", iceServer);
-            else if(0 == iceServer.compare(0, 6, "turns:"))
-                parameters.emplace("turns-server", iceServer);
-        }
+    }
+
+    for(const std::string& iceServer: agentsConfig.iceServers) {
+        if(0 == iceServer.compare(0, 5, "stun:"))
+            parameters.emplace("stun-server", iceServer);
+        else if(0 == iceServer.compare(0, 5, "turn:"))
+            parameters.emplace("turn-server", iceServer);
+        else if(0 == iceServer.compare(0, 6, "turns:"))
+            parameters.emplace("turns-server", iceServer);
     }
 
     std::string body;
