@@ -5,14 +5,14 @@ if [ -n "$PUBLIC_IP" ]; then
     EXTERNAL_IP_OPTION=--external-ip=$PUBLIC_IP
 fi
 
-COTURN="$SNAP/usr/bin/coturn \
+COTURN="$SNAP/opt/coturn/bin/turnserver \
     -c $SNAP_COMMON/turnserver.conf \
     --db=$SNAP_COMMON/turndb \
     $EXTERNAL_IP_OPTION \
     --use-auth-secret  \
     --realm=$SNAP_NAME \
     --no-cli \
-    --log-file=/dev/null \
+    --log-file=stdout \
     --simple-log \
     --pidfile= \
     --no-tls \

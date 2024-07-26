@@ -102,13 +102,36 @@ parts:
     stage-packages:
       - libssl3
   coturn:
+    plugin: autotools
+    source: https://github.com/WebRTSP/coturn.git
+    source-branch: stable
+    build-environment:
+      - TURN_NO_SYSTEMD: yes
+      - TURN_NO_MYSQL: yes
+      - TURN_NO_PQ: yes
+      - TURN_NO_MYSQL: yes
+      - TURN_NO_MONGO: yes
+      - TURN_NO_HIREDIS: yes
+      - TURN_NO_PROMETHEUS: yes
+    autotools-configure-parameters:
+      - --prefix=/opt/coturn
+      - --turndb=/var/snap/${SNAPCRAFT_PROJECT_NAME}/common
+    build-packages:
+      - libevent-dev
+      - libsqlite3-dev
+    stage-packages:
+      - libevent-2.1-7
+      - libevent-core-2.1-7
+      - libevent-extra-2.1-7
+      - libevent-openssl-2.1-7
+      - libevent-pthreads-2.1-7
+  coturn.sh:
     plugin: dump
     source: .
     organize:
-        coturn.sh: opt/${SNAPCRAFT_PROJECT_NAME}/bin/
-    stage-packages:
-      - coturn
-      - pwgen
+        coturn.sh: opt/coturn/bin/
+    stage:
+        - opt/coturn/bin/coturn.sh
   restreamer:
     plugin: cmake
     source-type: git
@@ -138,6 +161,7 @@ parts:
       - libspdlog1
       - libgsoap-2.8.117
       - libmicrohttpd12
+      - pwgen
 apps:
   ReStreamer:
     command: opt/${SNAPCRAFT_PROJECT_NAME}/bin/ReStreamer
@@ -147,6 +171,7 @@ apps:
       - network
     restart-delay: 3s
     environment:
+      PATH: $SNAP/opt/coturn/bin:$PATH
       LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:$LD_LIBRARY_PATH
       GST_DEBUG: 2
       GST_DEBUG_NO_COLOR: 1
@@ -154,7 +179,7 @@ apps:
       GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/opt/${SNAP_NAME}/libexec/gstreamer-1.0/gst-plugin-scanner
   Coturn:
-    command: opt/${SNAPCRAFT_PROJECT_NAME}/bin/coturn.sh
+    command: opt/coturn/bin/coturn.sh
     daemon: simple
     plugs:
       - network-bind
