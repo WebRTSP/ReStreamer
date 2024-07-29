@@ -647,14 +647,32 @@ static void ConfigureCoturn(Config* config)
     if(staticAuthSecret.back() == '\n')
         staticAuthSecret.pop_back();
 
-    g_autofree gchar* turnadminCmd = g_strdup_printf(
+    g_autofree gchar* deleteSecretsCmd = g_strdup_printf(
+        "turnadmin --db=%s/turndb --delete-all-secret --realm=%s",
+        snapCommon,
+        config->coturnConfig.realm.c_str());
+
+    if(!g_spawn_command_line_sync(
+        deleteSecretsCmd,
+        nullptr,
+        nullptr,
+        &exitStatus,
+        &error) ||
+        !g_spawn_check_wait_status(exitStatus, &error))
+    {
+        Log()->error("Failed to delete old TURN REST API secrets: {}", error->message);
+
+        return;
+    }
+
+    g_autofree gchar* setSecretCmd = g_strdup_printf(
         "turnadmin --db=%s/turndb --set-secret=%s --realm=%s",
         snapCommon,
         staticAuthSecret.c_str(),
         config->coturnConfig.realm.c_str());
 
     if(!g_spawn_command_line_sync(
-        turnadminCmd,
+        setSecretCmd,
         nullptr,
         nullptr,
         &exitStatus,
