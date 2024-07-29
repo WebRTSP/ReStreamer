@@ -650,7 +650,7 @@ static void ConfigureCoturn(Config* config)
     g_autofree gchar* deleteSecretsCmd = g_strdup_printf(
         "turnadmin --db=%s/turndb --delete-all-secret --realm=%s",
         snapCommon,
-        config->coturnConfig.realm.c_str());
+        snapName);
 
     if(!g_spawn_command_line_sync(
         deleteSecretsCmd,
@@ -669,7 +669,7 @@ static void ConfigureCoturn(Config* config)
         "turnadmin --db=%s/turndb --set-secret=%s --realm=%s",
         snapCommon,
         staticAuthSecret.c_str(),
-        config->coturnConfig.realm.c_str());
+        snapName);
 
     if(!g_spawn_command_line_sync(
         setSecretCmd,

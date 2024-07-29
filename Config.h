@@ -114,7 +114,6 @@ struct AgentsConfig
 
 struct CoturnConfig
 {
-    std::string realm = "WebRTSP/ReStreamer";
     uint16_t port = 3478;
     std::optional<std::string> staticAuthSecret;
     std::chrono::seconds passwordTTL = std::chrono::hours(1);
