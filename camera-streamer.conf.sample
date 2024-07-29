@@ -40,6 +40,7 @@ webrtc: {
 #  turn-server: "turn://username:password@host:port"
 #  min-rtp-port: 0
 #  rtp-ports-count: 65535
+#  relay-transport-only: false
 }
 
 debug: {

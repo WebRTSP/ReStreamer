@@ -152,6 +152,11 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     }
                 }
             }
+
+            int relayTransportOnly = FALSE;
+            if(CONFIG_TRUE == config_setting_lookup_bool(webrtcConfig, "relay-transport-only", &relayTransportOnly)) {
+                loadedConfig.webRTCConfig->useRelayTransport = relayTransportOnly != FALSE;
+            }
         } else { // Deprecated. For backward compatibility
             config_setting_t* stunServerConfig = config_lookup(&config, "stun");
             if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
