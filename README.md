@@ -48,6 +48,37 @@ agents: {
 5. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
 6. Open in your browser http://your.router.ip.address:5080/
 
+## How to use it to access IP Cam not accessible directly (and without any port forwarding)
+1. Install it on some VPS/VDS/Dedicated with public IP;
+2. _[optional][recommended]_ [Configure TLS](#how-enable-tls-with-lets-encrypt-certificate-highly-recommended) and users in `users` section of config file;
+3. In config file replace (or add to) `streamers` section `proxy` streamer for Remote Agent
+```
+streamers: (
+  {
+    name: "Proxy for Remote Agent"
+    type: "proxy"
+    agent-token: "some random and pretty long string"
+  }
+)
+```
+4. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
+5. Install app Snap package on some device on network where IP Cam is accessible directly and configure it [as Remote Agent](https://github.com/WebRTSP/RecordStreamer#how-to-configure-it-as-remote-agent) ;
+6. Open in your browser https://your.server.address:5443/ if you have TLS enabled and http://your.server.address:5080/ if not;
+
+## How to configure it as Remote Agent
+1. Install it on some device (you can use something like Raspberry Pi);
+2. Add `signalling-server` section with the same properties you've defined on the server
+```
+signalling-server: {
+  host: "your.server.address"
+  tls: true // or `false` if you didn't configure TLS on server
+  uri: "Proxy for Remote Agent"
+  token: "some random and pretty long string"
+}
+```
+3. [Configure streamer](#how-to-configure-your-own-source) for IP Cam you want access to ;
+4. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
+
 ## How to use it as Cloud DVR for IP Cam not accessible directly
 1. In config file replace `streamers` section with something like
 ```
