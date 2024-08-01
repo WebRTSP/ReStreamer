@@ -8,7 +8,7 @@ Online demo: http://ipcam.stream:5080
 
 ## How to install it as Snap package and try
 * Run: `sudo snap install rtsp-to-webrtsp --edge`;
-* Open in your browser: `http://your_server_ip_or_dns:5080/`;
+* Open in your browser: `http://your.server.address:5080/`;
 
 ## How to edit config file
 1. `sudoedit /var/snap/rtsp-to-webrtsp/common/restreamer.conf`;
@@ -20,7 +20,7 @@ Online demo: http://ipcam.stream:5080
 streamers: (
   {
     name: "Your source name"
-    url: "rtsp://your_source_ip_or_dns:port/path"
+    url: "rtsp://your.ip.cam.address:port/path"
   }
 )
 ```
@@ -100,8 +100,8 @@ streamers: (
 5. Finally with above config recordigns will be available in `/var/snap/rtsp-to-webrtsp/common/recordings/DVR/`;
 
 ## How enable TLS with Let's Encrypt certificate (highly recommended)
-* Run: `./enableTLS.sh root@your_server_ip_or_dns.com:22 you@gmail.com`;
-* Open in your browser: `https://your_server_ip_or_dns:5443/`;
+* Run: `./enableTLS.sh root@your.server.address:22 you@gmail.com`;
+* Open in your browser: `https://your.server.address:5443/`;
 
 ## Troubleshooting
 * To see application logs in realtime run: `sudo snap logs rtsp-to-webrtsp -f`;
