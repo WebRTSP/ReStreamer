@@ -26,6 +26,28 @@ streamers: (
 ```
 2. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
 
+## How to access it behind router/NAT with port forwarding
+1. In config file in `webrtc` section uncomment `stun-server` (and maybe replace value with your preferable STUN server), `min-rtp-port` and `rtp-ports-count` (and provide some reasonable values)
+```
+webrtc: {
+  stun-server: "stun://stun.l.google.com:19302"
+  min-rtp-port: 6000
+  rtp-ports-count: 100
+}
+```
+2. _[optional]_ prevent Coturn from starting (it's useless in that case) by `use-coturn: false` in `agents` section
+```
+agents: {
+  use-coturn: false
+}
+```   
+4. Configure port forwarding on your router for following ports:
+  * TCP 5080
+  * TCP 5554
+  * UDP 6000-6100 (or what you've specified in `webrtc` section)
+5. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
+6. Open in your browser http://your.router.ip.address:5080/
+
 ## How to use it as Cloud DVR for IP Cam not accessible directly
 1. In config file replace `streamers` section with something like
 ```
