@@ -45,8 +45,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         return false;
 
     const std::string rootPath = "/";
-    bool hasPublicStreamers = false;
-    std::set<std::string> autoVisibilityStreamers;
+    const std::array<const char*, 2> secureRootPaths = { "/!", "/$" };
 
     http::Config loadedHttpConfig = *httpConfig;
     Config loadedConfig = *config;
@@ -291,13 +290,10 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 int isPublic = false;
                 if(CONFIG_TRUE == config_setting_lookup_bool(streamerConfig, "public", &isPublic)) {
                     if(isPublic != FALSE) {
-                        hasPublicStreamers = true;
                         visibility = StreamerConfig::Visibility::Public;
                     } else {
                         visibility = StreamerConfig::Visibility::Protected;
                     }
-                } else {
-                    autoVisibilityStreamers.emplace(name);
                 }
 
                 const char* description = nullptr;
@@ -428,13 +424,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                             std::string(forceH264ProfileLevelId) :
                             std::string(),
                         recordConfig });
-
-
-                if(visibility != StreamerConfig::Visibility::Auto) {
-                    loadedHttpConfig.indexPaths.emplace(
-                        rootPath + name,
-                        visibility == StreamerConfig::Visibility::Protected);
-                }
             }
         }
 #endif
@@ -535,9 +524,27 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();
 
+    bool hasPublicStreamers = false;
+    for(const auto& pair: loadedConfig.streamers) {
+        const std::string& escapedName = pair.first;
+        const StreamerConfig::Visibility visibility = pair.second.visibility;
+        if(visibility == StreamerConfig::Visibility::Auto) {
+            loadedHttpConfig.indexPaths.emplace(
+                rootPath + escapedName,
+                loadedConfig.authRequired);
+        } else {
+            loadedHttpConfig.indexPaths.emplace(
+                rootPath + escapedName,
+                visibility == StreamerConfig::Visibility::Protected);
+        }
+
+        hasPublicStreamers = hasPublicStreamers || visibility == StreamerConfig::Visibility::Public;
+    }
     loadedHttpConfig.indexPaths.emplace(rootPath, loadedConfig.authRequired && !hasPublicStreamers);
-    for(const std::string& streamerName: autoVisibilityStreamers) {
-        loadedHttpConfig.indexPaths.emplace(rootPath + streamerName, loadedConfig.authRequired);
+    if(loadedConfig.authRequired) {
+        for(const char* secureRootPath: secureRootPaths) {
+            loadedHttpConfig.indexPaths.emplace(secureRootPath, true);
+        }
     }
 
     bool success = true;
