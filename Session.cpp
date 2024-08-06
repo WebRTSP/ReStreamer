@@ -402,20 +402,20 @@ bool Session::onSubscribeRequest(
     RecordMountpointData& data = _sharedData->recordMountpointsData[requestPtr->uri];
     auto selfIt = data.subscriptions.find(this);
     if(selfIt != data.subscriptions.end()) {
-        Log()->error("[{}] Second try to subscribe to the same streamer \"{}\"", sessionLogId.c_str(), requestPtr->uri);
+        Log()->error("[{}] Second try to subscribe to the same streamer \"{}\"", sessionLogId, requestPtr->uri);
         return false;
     }
 
     rtsp::MediaSessionId mediaSessionId = nextSessionId();
     if(!data.recording) {
-        Log()->info("[{}] Streamer \"{}\" not active yet. Subscribing...", sessionLogId.c_str(), requestPtr->uri);
+        Log()->info("[{}] Streamer \"{}\" not active yet. Subscribing...", sessionLogId, requestPtr->uri);
         data.subscriptions.emplace(this, mediaSessionId);
     }
 
     sendOkResponse(requestPtr->cseq, mediaSessionId);
 
     if(data.recording) {
-        Log()->info("[{}] Streamer \"{}\" already active. Starting record to client...", sessionLogId.c_str(), requestPtr->uri);
+        Log()->info("[{}] Streamer \"{}\" already active. Starting record to client...", sessionLogId, requestPtr->uri);
         startRecordToClient(requestPtr->uri, mediaSessionId);
     }
 
@@ -536,7 +536,7 @@ bool Session::forwardRequest(
         "[{}] -> [{}]\n"
         "Uri: \"{}\" -> \"{}\"\n"
         "CSeq: {} -> {}",
-        (*sourceSession)->sessionLogId.c_str(), sessionLogId.c_str(),
+        (*sourceSession)->sessionLogId, sessionLogId,
         sourceUri, attachedRequest->uri,
         requestPtr->cseq, attachedRequest->cseq);
 
