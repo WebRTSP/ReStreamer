@@ -146,8 +146,10 @@ bool Session::subscribeEnabled(const std::string& uri) noexcept
 bool Session::authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     auto it = _config->streamers.find(requestPtr->uri);
-    if(it == _config->streamers.end())
+    if(it == _config->streamers.end()) {
+        Log()->error("[{}] Can't find streamer \"{}\"", sessionLogId, requestPtr->uri);
         return false;
+    }
 
     switch(it->second.type) {
     case StreamerConfig::Type::Record:
