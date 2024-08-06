@@ -268,12 +268,12 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     config_setting_get_elem(streamersConfig, streamerIdx);
                 if(!streamerConfig || CONFIG_FALSE == config_setting_is_group(streamerConfig)) {
                     Log()->warn("Wrong streamer config format. Streamer skipped.");
-                    break;
+                    continue;
                 }
                 const char* name;
                 if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "name", &name)) {
                     Log()->warn("Missing streamer name. Streamer skipped.");
-                    break;
+                    continue;
                 }
 
                 int restream = TRUE;
@@ -344,8 +344,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 else if(0 == strcmp(type, "v4l2"))
                     streamerType = StreamerConfig::Type::V4L2;
                 else {
-                    Log()->warn("Unknown streamer type. Streamer skipped.");
-                    break;
+                    Log()->warn("Unknown streamer type. Streamer \"{}\" skipped.", name);
+                    continue;
                 }
 
                 if(streamerType != StreamerConfig::Type::Record &&
@@ -356,20 +356,20 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                    streamerType != StreamerConfig::Type::V4L2 &&
                    !uri)
                 {
-                    Log()->warn("Missing streamer uri. Streamer skipped.");
-                    break;
+                    Log()->warn("Missing streamer uri. Streamer \"{}\" skipped.", name);
+                    continue;
                 }
                 if(streamerType == StreamerConfig::Type::FilePlayer && !dir) {
-                    Log()->warn("Missing player source dir. Streamer skipped.");
-                    break;
+                    Log()->warn("Missing player source dir. Streamer \"{}\" skipped.", name);
+                    continue;
                 }
 
                 const char* recordingsDir = nullptr;
                 config_setting_lookup_string(streamerConfig, "recordings-dir", &recordingsDir);
 
                 if(streamerType == StreamerConfig::Type::Record && !recordingsDir) {
-                    Log()->warn("Missing recordings target dir. Streamer skipped.");
-                    break;
+                    Log()->warn("Missing recordings target dir. Streamer \"{}\" skipped.", name);
+                    continue;
                 }
 
                 int recordingsDirMaxSize = 1024;
@@ -492,19 +492,19 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     config_setting_get_elem(usersConfig, userIdx);
                 if(!userConfig || CONFIG_FALSE == config_setting_is_group(userConfig)) {
                     Log()->warn("Wrong user config format. User skipped.");
-                    break;
+                    continue;
                 }
 
                 const char* login = nullptr;
                 if(CONFIG_FALSE == config_setting_lookup_string(userConfig, "login", &login)) {
                     Log()->warn("Missing user login. User skipped.");
-                    break;
+                    continue;
                 }
 
                 const char* pass = nullptr;
                 if(CONFIG_FALSE == config_setting_lookup_string(userConfig, "pass", &pass)) {
-                    Log()->warn("Missing user password. User skipped.");
-                    break;
+                    Log()->warn("Missing user password. User \"{}\" skipped.", login);
+                    continue;
                 }
 
                 loadedHttpConfig.passwd.emplace(login, pass);
