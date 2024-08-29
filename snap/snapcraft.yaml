@@ -22,8 +22,8 @@ architectures:
   - build-on: arm64
 
 layout:
-  /opt/rtsp-to-webrtsp/lib:
-    symlink: $SNAP/opt/rtsp-to-webrtsp/lib
+  /opt/${SNAPCRAFT_PROJECT_NAME}/lib:
+    symlink: $SNAP/opt/${SNAPCRAFT_PROJECT_NAME}/lib
 
 parts:
   meson-deps:
