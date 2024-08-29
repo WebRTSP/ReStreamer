@@ -34,8 +34,8 @@ parts:
       - python3-pip
   gstreamer:
     plugin: meson
-    source: https://github.com/RSATom/gstreamer.git
-    source-branch: 1.22
+    source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+    source-branch: 1.24
     after:
       - meson-deps
     build-packages:
