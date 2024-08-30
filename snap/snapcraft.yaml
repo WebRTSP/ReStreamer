@@ -48,6 +48,9 @@ parts:
       - --prefix=/opt/${SNAPCRAFT_PROJECT_NAME}
       - -Dauto_features=disabled
       - -Dpython=disabled
+      - -Dtools=enabled # required for orc
+      - -Dorc=enabled
+      - -Dorc-source=subproject
       - -Dlibav=disabled
       - -Dlibnice=enabled
       - -Dbase=enabled
@@ -60,7 +63,6 @@ parts:
       - -Dqt5=disabled
       - -Dqt6=disabled
       - -Dwebrtc=enabled
-      - -Dtools=disabled
       - -Dtests=disabled
       - -Dexamples=disabled
       - -Dintrospection=disabled
