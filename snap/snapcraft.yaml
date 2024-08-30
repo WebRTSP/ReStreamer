@@ -58,6 +58,8 @@ parts:
       - -Drtsp_server=disabled
       - -Dgst-examples=disabled
       - -Dqt5=disabled
+      - -Dqt6=disabled
+      - -Dwebrtc=enabled
       - -Dtools=disabled
       - -Dtests=disabled
       - -Dexamples=disabled
@@ -82,6 +84,7 @@ parts:
       - -Dgst-plugins-bad:videoparsers=enabled
       - -Dgst-plugins-bad:dtls=enabled
       - -Dgst-plugins-bad:srtp=enabled
+      - -Dgst-plugins-bad:sctp=enabled
     stage-packages:
       - libunwind8
       - libdw1
