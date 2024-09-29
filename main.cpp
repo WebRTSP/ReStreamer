@@ -562,6 +562,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     return success;
 }
 
+#ifdef SNAPCRAFT_BUILD
 static bool StopCoturn(bool disable)
 {
     g_autoptr(GError) error = nullptr;
@@ -715,6 +716,7 @@ static void ConfigureCoturn(Config* config)
 
     config->coturnConfig.staticAuthSecret.emplace(std::move(staticAuthSecret));
 }
+#endif
 
 int main(int argc, char *argv[])
 {
