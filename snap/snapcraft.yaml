@@ -114,13 +114,13 @@ parts:
     source: https://github.com/WebRTSP/coturn.git
     source-branch: stable
     build-environment:
-      - TURN_NO_SYSTEMD: yes
-      - TURN_NO_MYSQL: yes
-      - TURN_NO_PQ: yes
-      - TURN_NO_MYSQL: yes
-      - TURN_NO_MONGO: yes
-      - TURN_NO_HIREDIS: yes
-      - TURN_NO_PROMETHEUS: yes
+      - TURN_NO_SYSTEMD: "yes"
+      - TURN_NO_MYSQL: "yes"
+      - TURN_NO_PQ: "yes"
+      - TURN_NO_MYSQL: "yes"
+      - TURN_NO_MONGO: "yes"
+      - TURN_NO_HIREDIS: "yes"
+      - TURN_NO_PROMETHEUS: "yes"
     autotools-configure-parameters:
       - --prefix=/opt/coturn
       - --turndb=/var/snap/${SNAPCRAFT_PROJECT_NAME}/common
