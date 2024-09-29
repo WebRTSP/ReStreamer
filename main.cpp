@@ -184,6 +184,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
         config_setting_t* agentsConfig = config_lookup(&config, "agents");
         if(agentsConfig && CONFIG_TRUE == config_setting_is_group(agentsConfig)) {
             const char* agentsStunServer = nullptr;
@@ -209,6 +210,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 loadedConfig.agentsConfig.useCoturn = useCoturn != FALSE;
             }
         }
+#endif
 
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
@@ -562,7 +564,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     return success;
 }
 
-#ifdef SNAPCRAFT_BUILD
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
 static bool StopCoturn(bool disable)
 {
     g_autoptr(GError) error = nullptr;
@@ -741,7 +743,7 @@ int main(int argc, char *argv[])
     if(!LoadConfig(&httpConfig, &config, basePath))
         return -1;
 
-#ifdef SNAPCRAFT_BUILD
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
     const bool disableCoturn = config.useAgentMode() || !config.agentsConfig.useCoturn;
     // to workaround "error running snapctl: snap "rtsp-to-webrtsp" has "install-snap" change in progress"
     // have to try multiple times
@@ -759,7 +761,7 @@ int main(int argc, char *argv[])
     if(config.useServerMode())
         config.publicIp = DetectPublicIP(*config.webRTCConfig);
 
-#ifdef SNAPCRAFT_BUILD
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
     if(!disableCoturn)
         ConfigureCoturn(&config);
 #endif
