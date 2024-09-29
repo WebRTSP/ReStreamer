@@ -48,32 +48,31 @@ parts:
       - --prefix=/opt/${SNAPCRAFT_PROJECT_NAME}
       - -Dauto_features=disabled
       - -Dpython=disabled
-      - -Dtools=enabled # required for orc
-      - -Dorc=enabled
-      - -Dorc-source=subproject
       - -Dlibav=disabled
-      - -Dlibnice=enabled
-      - -Dbase=enabled
-      - -Dgood=enabled
-      - -Dugly=disabled
-      - -Dbad=enabled
       - -Ddevtools=disabled
       - -Drtsp_server=disabled
       - -Dgst-examples=disabled
       - -Dqt5=disabled
       - -Dqt6=disabled
-      - -Dwebrtc=enabled
       - -Dtests=disabled
       - -Dexamples=disabled
       - -Dintrospection=disabled
       - -Dnls=disabled
       - -Ddoc=disabled
       - -Dgstreamer:ptp-helper-permissions=none
+      - -Dgpl=disabled
+      - -Dtools=enabled # required for orc
+      - -Dorc=enabled
+      - -Dorc-source=subproject
+      - -Dwebrtc=enabled
+      - -Dlibnice=enabled
       - -Dlibnice:gupnp=auto
       - -Dlibnice:gstreamer=enabled
       - -Dlibnice:crypto-library=auto
+      - -Dbase=enabled
       - -Dgst-plugins-base:playback=enabled
       - -Dgst-plugins-base:typefind=enabled
+      - -Dgood=enabled
       - -Dgst-plugins-good:rtsp=enabled
       - -Dgst-plugins-good:rtpmanager=enabled
       - -Dgst-plugins-good:udp=enabled
@@ -81,12 +80,14 @@ parts:
       - -Dgst-plugins-good:debugutils=enabled
       - -Dgst-plugins-good:multifile=enabled
       - -Dgst-plugins-good:isomp4=enabled
+      - -Dbad=enabled
       - -Dgst-plugins-bad:webrtc=enabled
       - -Dgst-plugins-bad:codectimestamper=enabled
       - -Dgst-plugins-bad:videoparsers=enabled
       - -Dgst-plugins-bad:dtls=enabled
       - -Dgst-plugins-bad:srtp=enabled
       - -Dgst-plugins-bad:sctp=enabled
+      - -Dugly=disabled
     stage-packages:
       - libunwind8
       - libdw1
