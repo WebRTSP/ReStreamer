@@ -138,7 +138,6 @@ parts:
         craftctl default
         craftctl set version="$(git describe --always)"
     after:
-      - lws
       - gstreamer
     build-packages:
       - g++
