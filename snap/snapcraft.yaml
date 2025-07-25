@@ -90,7 +90,7 @@ parts:
     stage-packages:
       - libunwind8
       - libdw1
-      - libgupnp-1.2-1
+      - libupnp17t64
       - libgupnp-igd-1.6-0
       - libsrtp2-1
   coturn:
