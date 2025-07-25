@@ -1,5 +1,5 @@
 name: rtsp-to-webrtsp
-base: core22
+base: core24
 summary: Media URLs ReStreamer (over WebRTC)
 adopt-info: restreamer
 description: |
@@ -16,10 +16,9 @@ license: GPL-3.0
 grade: devel
 confinement: strict
 
-architectures:
-  - build-on: amd64
-  - build-on: armhf
-  - build-on: arm64
+platforms:
+  amd64:
+  arm64:
 
 layout:
   /opt/${SNAPCRAFT_PROJECT_NAME}/lib:
@@ -94,21 +93,6 @@ parts:
       - libgupnp-1.2-1
       - libgupnp-igd-1.0-4
       - libsrtp2-1
-  lws:
-    plugin: cmake
-    source-type: git
-    source: https://github.com/warmcat/libwebsockets.git
-    source-branch: v4.3-stable
-    cmake-parameters:
-      - -DCMAKE_BUILD_TYPE=Release
-      - -DLWS_WITHOUT_TESTAPPS=ON
-      - -DLWS_WITH_GLIB=ON
-      - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
-    build-packages:
-      - libssl-dev
-      - libglib2.0-dev
-    stage-packages:
-      - libssl3
   coturn:
     plugin: autotools
     source: https://github.com/WebRTSP/coturn.git
@@ -164,11 +148,14 @@ parts:
       - gsoap
       - libgsoap-dev
       - libmicrohttpd-dev
+      - libwebsockets-dev
     stage-packages:
       - libconfig9
       - libspdlog1
       - libgsoap-2.8.117
       - libmicrohttpd12
+      - libwebsockets19t64
+      - libwebsockets-evlib-glib
       - pwgen
 apps:
   ReStreamer:
