@@ -25,19 +25,12 @@ layout:
     symlink: $SNAP/opt/${SNAPCRAFT_PROJECT_NAME}/lib
 
 parts:
-  meson-deps:
-    plugin: nil
-    override-build: |
-      pip install meson
-    build-packages:
-      - python3-pip
   gstreamer:
     plugin: meson
     source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
     source-branch: 1.24
-    after:
-      - meson-deps
     build-packages:
+      - meson
       - ninja-build
       - flex
       - bison
@@ -129,8 +122,8 @@ parts:
     source-type: git
     source: .
     build-environment:
-      - PKG_CONFIG_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
-      - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+      - PKG_CONFIG_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
+      - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
@@ -150,8 +143,8 @@ parts:
       - libwebsockets-dev
     stage-packages:
       - libconfig9
-      - libspdlog1
-      - libgsoap-2.8.117
+      - libspdlog1.12
+      - libgsoap-2.8.132t64
       - libmicrohttpd12
       - libwebsockets19t64
       - libwebsockets-evlib-glib
@@ -166,11 +159,11 @@ apps:
     restart-delay: 3s
     environment:
       PATH: $SNAP/opt/coturn/bin:${PATH}
-      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:${LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}
       GST_DEBUG: 2
       GST_DEBUG_NO_COLOR: 1
-      GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
-      GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
+      GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gstreamer-1.0
+      GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/opt/${SNAP_NAME}/libexec/gstreamer-1.0/gst-plugin-scanner
   Coturn:
     command: opt/coturn/bin/coturn.sh
