@@ -26,6 +26,7 @@ if(ONVIF_SUPPORT)
 endif()
 
 add_subdirectory(WebRTSP)
+add_subdirectory(www)
 
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
@@ -45,10 +46,7 @@ file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 file(GLOB_RECURSE SNAP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     snap/*)
 
-file(GLOB_RECURSE WWW RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    www/[^.]*)
-
-add_executable(${PROJECT_NAME} ${SOURCES} ${SNAP} ${WWW})
+add_executable(${PROJECT_NAME} ${SOURCES} ${SNAP})
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/WebRTSP
     ${LIBCONFIG_INCLUDE_DIRS}
@@ -78,13 +76,4 @@ if(SNAPCRAFT_BUILD)
     else()
         install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/restreamer.conf.sample DESTINATION etc)
     endif()
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/www
-        DESTINATION /opt/$ENV{SNAPCRAFT_PROJECT_NAME}
-        FILES_MATCHING
-        PATTERN "www/3rd_party/*.js"
-        PATTERN "www/3rd_party/*.css"
-        PATTERN "www/WebRTSP/*.mjs"
-        PATTERN "www/css/*.css"
-        PATTERN "www/index.html"
-        PATTERN "www/favicon.ico")
 endif()

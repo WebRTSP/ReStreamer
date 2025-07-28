@@ -132,6 +132,8 @@ parts:
         craftctl set version="$(git describe --always)"
     after:
       - gstreamer
+    build-snaps:
+      - node/22/stable
     build-packages:
       - g++
       - make

@@ -3,4 +3,4 @@
 	url = https://github.com/WebRTSP/Native.git
 [submodule "www"]
 	path = www
-	url = https://github.com/WebRTSP/www.git
+	url = https://github.com/WebRTSP/www-ng.git
