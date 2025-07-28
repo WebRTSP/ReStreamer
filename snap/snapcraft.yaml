@@ -1,5 +1,5 @@
 name: rtsp-to-webrtsp
-base: core22
+base: core24
 summary: Media URLs ReStreamer (over WebRTC)
 adopt-info: restreamer
 description: |
@@ -16,29 +16,21 @@ license: GPL-3.0
 grade: devel
 confinement: strict
 
-architectures:
-  - build-on: amd64
-  - build-on: armhf
-  - build-on: arm64
+platforms:
+  amd64:
+  arm64:
 
 layout:
   /opt/${SNAPCRAFT_PROJECT_NAME}/lib:
     symlink: $SNAP/opt/${SNAPCRAFT_PROJECT_NAME}/lib
 
 parts:
-  meson-deps:
-    plugin: nil
-    override-build: |
-      pip install meson
-    build-packages:
-      - python3-pip
   gstreamer:
     plugin: meson
     source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
     source-branch: 1.24
-    after:
-      - meson-deps
     build-packages:
+      - meson
       - ninja-build
       - flex
       - bison
@@ -91,24 +83,9 @@ parts:
     stage-packages:
       - libunwind8
       - libdw1
-      - libgupnp-1.2-1
-      - libgupnp-igd-1.0-4
+      - libupnp17t64
+      - libgupnp-igd-1.6-0
       - libsrtp2-1
-  lws:
-    plugin: cmake
-    source-type: git
-    source: https://github.com/warmcat/libwebsockets.git
-    source-branch: v4.3-stable
-    cmake-parameters:
-      - -DCMAKE_BUILD_TYPE=Release
-      - -DLWS_WITHOUT_TESTAPPS=ON
-      - -DLWS_WITH_GLIB=ON
-      - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
-    build-packages:
-      - libssl-dev
-      - libglib2.0-dev
-    stage-packages:
-      - libssl3
   coturn:
     plugin: autotools
     source: https://github.com/WebRTSP/coturn.git
@@ -145,8 +122,8 @@ parts:
     source-type: git
     source: .
     build-environment:
-      - PKG_CONFIG_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
-      - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+      - PKG_CONFIG_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
+      - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
@@ -154,7 +131,6 @@ parts:
         craftctl default
         craftctl set version="$(git describe --always)"
     after:
-      - lws
       - gstreamer
     build-packages:
       - g++
@@ -164,11 +140,14 @@ parts:
       - gsoap
       - libgsoap-dev
       - libmicrohttpd-dev
+      - libwebsockets-dev
     stage-packages:
       - libconfig9
-      - libspdlog1
-      - libgsoap-2.8.117
+      - libspdlog1.12
+      - libgsoap-2.8.132t64
       - libmicrohttpd12
+      - libwebsockets19t64
+      - libwebsockets-evlib-glib
       - pwgen
 apps:
   ReStreamer:
@@ -180,11 +159,11 @@ apps:
     restart-delay: 3s
     environment:
       PATH: $SNAP/opt/coturn/bin:${PATH}
-      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}:${LD_LIBRARY_PATH}
+      LD_LIBRARY_PATH: $SNAP/opt/${SNAP_NAME}/lib:$SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}
       GST_DEBUG: 2
       GST_DEBUG_NO_COLOR: 1
-      GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
-      GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${SNAPCRAFT_ARCH_TRIPLET}/gstreamer-1.0
+      GST_PLUGIN_PATH: $SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gstreamer-1.0
+      GST_PLUGIN_SYSTEM_PATH: $SNAP/opt/${SNAP_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/opt/${SNAP_NAME}/libexec/gstreamer-1.0/gst-plugin-scanner
   Coturn:
     command: opt/coturn/bin/coturn.sh
