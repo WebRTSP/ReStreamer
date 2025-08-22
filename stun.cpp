@@ -51,7 +51,7 @@ std::optional<std::string> DetectPublicIP(const WebRTCConfig& webRTCConfig)
         .ai_socktype = SOCK_DGRAM
     };
 
-    for(guint i = 0; i < 10; ++i) {
+    for(guint i = 0; i < 5; ++i) {
         if(i != 0) {
             const guint baseDelay = 1 << std::min(i, 8u);
             const int delay = g_random_int_range(baseDelay,  baseDelay << 1);
