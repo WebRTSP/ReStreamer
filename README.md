@@ -79,13 +79,13 @@ signalling-server: {
 3. [Configure streamer](#how-to-configure-your-own-source) for IP Cam you want access to ;
 4. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
 
-## How to use it as Cloud DVR for IP Cam not accessible directly
+## How to use it as Cloud NVR for IP Cam not accessible directly
 1. In config file replace `streamers` section with something like
 ```
 streamers: (
   {
     restream: false
-    name: "DVR"
+    name: "NVR"
     type: "record"
     record-token: "some-random-string"
     recordings-dir: "recordings" // path relative to %SNAP_COMMON% (/var/snap/rtsp-to-webrtsp/common/) where recordings will be placed
@@ -96,8 +96,8 @@ streamers: (
 ```
 2. Restart Snap: `sudo snap restart rtsp-to-webrtsp`;
 3. Install [webrtsp-record-streamer](https://github.com/WebRTSP/RecordStreamer#how-to-install-it-as-snap-package) Snap package on some device on network where IP Cam is accessible directly;
-4. Configure `webrtsp-record-streamer` as described [here](https://github.com/WebRTSP/RecordStreamer#how-to-use-it-as-streamer-for-cloud-dvr-with-motion-detection);
-5. Finally with above config recordigns will be available in `/var/snap/rtsp-to-webrtsp/common/recordings/DVR/`;
+4. Configure `webrtsp-record-streamer` as described [here](https://github.com/WebRTSP/RecordStreamer#how-to-use-it-as-streamer-for-cloud-nvr-with-motion-detection);
+5. Finally with above config recordigns will be available in `/var/snap/rtsp-to-webrtsp/common/recordings/NVR/`;
 
 ## How enable TLS with Let's Encrypt certificate (highly recommended)
 * Run: `./enableTLS.sh root@your.server.address:22 you@gmail.com`;

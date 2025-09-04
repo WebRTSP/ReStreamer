@@ -9,7 +9,7 @@ description: |
   
   * **Config file location:** /var/snap/rtsp-to-webrtsp/common/restreamer.conf
   * **Online demo:** http://ipcam.stream:5080
-  * **How to use it as Cloud DVR:** https://github.com/WebRTSP/ReStreamer#how-to-use-it-as-cloud-dvr-for-ip-cam-not-accessible-directly
+  * **How to use it as Cloud NVR:** https://github.com/WebRTSP/ReStreamer#how-to-use-it-as-cloud-nvr-for-ip-cam-not-accessible-directly
   * **How to use it behind router/NAT:** https://github.com/WebRTSP/ReStreamer#how-to-access-it-behind-routernat-with-port-forwarding
   * **How to use it to access IP Cam behind router/NAT:** https://github.com/WebRTSP/ReStreamer#how-to-use-it-to-access-ip-cam-not-accessible-directly-and-without-any-port-forwarding
 license: GPL-3.0
