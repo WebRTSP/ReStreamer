@@ -646,7 +646,7 @@ static void ConfigureCoturn(Config* config)
 
     g_autofree gchar* pwgenStdout = nullptr;
     if(!g_spawn_command_line_sync(
-        "pwgen --secure --capitalize 256",
+        "pwgen --secure --capitalize 127",
         &pwgenStdout,
         nullptr,
         &exitStatus,
