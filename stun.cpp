@@ -63,7 +63,7 @@ std::optional<std::string> DetectPublicIP(const WebRTCConfig& webRTCConfig)
         g_autoptr(addrinfo) addrinfos = nullptr;
         if(int ret = getaddrinfo(host, service ? service : DEFAULT_STUN_SERVICE, &hints, &addrinfos)) {
             log->error("Failed to resolve \"{}\": {}", host, gai_strerror(ret));
-            return {};
+            continue;
         }
 
         addrinfo* ai = addrinfos;
