@@ -224,6 +224,8 @@ void RecordingsDirChanged(
                     }
                     break;
                 }
+                default:
+                    break;
             }
         }
     }
@@ -374,6 +376,8 @@ void FilesDirChanged(
             }
             break;
         }
+        default:
+            break;
     }
 }
 
@@ -433,6 +437,8 @@ void FilesMonitorsInitAction(
                             }
                             break;
                         }
+                        default:
+                            break;
                     }
                 }
             }
@@ -688,6 +694,8 @@ int ReStreamerMain(
                     std::optional<GstV4L2Streamer::VideoResolution>(),
                     std::optional<std::string>(),
                     pair.second.useHwEncoder));
+            break;
+        default:
             break;
         }
     }
