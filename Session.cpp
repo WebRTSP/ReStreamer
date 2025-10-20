@@ -588,14 +588,14 @@ bool Session::forwardResponse(
 
     responsePtr->cseq = sourceCSeq;
 
-    if(responsePtr->statusCode == rtsp::StatusCode::OK) {
-        const rtsp::MediaSessionId& mediaSessionId = rtsp::ResponseSession(*responsePtr);
-        if(mediaSessionId.empty()) {
-            assert(false);
-            return false;
-        }
+    if(request.method == rtsp::Method::DESCRIBE) {
+        if(responsePtr->statusCode == rtsp::StatusCode::OK) {
+            const rtsp::MediaSessionId& mediaSessionId = rtsp::ResponseSession(*responsePtr);
+            if(mediaSessionId.empty()) {
+                assert(false);
+                return false;
+            }
 
-        if(request.method == rtsp::Method::DESCRIBE) {
             const rtsp::MediaSessionId clientMediaSessionId =
                 (*proxySession)->registerAgentMediaSession(_handle, request.uri, mediaSessionId);
             _agentMediaSessions2clientMediaSession.emplace(
@@ -604,6 +604,27 @@ bool Session::forwardResponse(
                     proxySession,
                     sourceUri,
                     clientMediaSessionId });
+
+            rtsp::SetResponseSession(responsePtr.get(), clientMediaSessionId);
+        }
+    } else {
+        const rtsp::MediaSessionId& mediaSessionId = rtsp::ResponseSession(*responsePtr);
+        if(!mediaSessionId.empty()) {
+            auto agentSesion2clientSesionIt = _agentMediaSessions2clientMediaSession.find(mediaSessionId);
+            auto clientSesion2agentSesionIt = _clientMediaSession2agentMediaSession.find(mediaSessionId);
+            if(agentSesion2clientSesionIt != _agentMediaSessions2clientMediaSession.end()) {
+                rtsp::SetResponseSession(responsePtr.get(), agentSesion2clientSesionIt->second.mediaSession);
+            } else if(clientSesion2agentSesionIt != _clientMediaSession2agentMediaSession.end()) {
+                rtsp::SetResponseSession(responsePtr.get(), clientSesion2agentSesionIt->second.mediaSession);
+            } else if(request.method != rtsp::Method::TEARDOWN) { // TEARDOWN removes media session
+                Log()->error(
+                    "[{}] Can't find proxy media sesion for response with session \"{}\"",
+                    sessionLogId,
+                    mediaSessionId);
+
+                assert(false);
+                return false;
+            }
         }
     }
 
