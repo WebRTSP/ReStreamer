@@ -481,7 +481,7 @@ bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noe
             sourceUri.swap(requestPtr->uri);
             requestPtr->uri = target.uri;
             rtsp::SetRequestSession(requestPtr.get(), target.mediaSession);
-            (*targetSession)->forwardRequest(_handle, sourceUri, requestPtr);
+            (*targetSession)->forwardRequest(_handle, sourceUri, mediaSessionId, requestPtr);
 
             return true;
         }
@@ -514,12 +514,13 @@ bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noe
         rtsp::SetRequestSession(requestPtr.get(), agentMediaSession);
 
     Session* agentSession = agentMountpointIt->second;
-    return agentSession->forwardRequest(_handle, sourceUri, requestPtr);
+    return agentSession->forwardRequest(_handle, sourceUri, mediaSessionId, requestPtr);
 }
 
 bool Session::forwardRequest(
     std::shared_ptr<SessionHandle>& sourceSession,
     const std::string& sourceUri,
+    const std::string& sourceMediaSession,
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Request* attachedRequest = attachRequest(requestPtr);
@@ -539,10 +540,12 @@ bool Session::forwardRequest(
         "Forwarding request:\n"
         "[{}] -> [{}]\n"
         "Uri: \"{}\" -> \"{}\"\n"
-        "CSeq: {} -> {}",
+        "CSeq: {} -> {}\n"
+        "session: \"{}\" -> \"{}\"",
         (*sourceSession)->sessionLogId, sessionLogId,
         sourceUri, attachedRequest->uri,
-        requestPtr->cseq, attachedRequest->cseq);
+        requestPtr->cseq, attachedRequest->cseq,
+        sourceMediaSession, rtsp::RequestSession(*requestPtr));
 
     sendRequest(*attachedRequest);
 
@@ -621,7 +624,7 @@ void Session::forwardTeardown(const MediaSessionInfo& target) noexcept
     requestPtr->uri = target.uri;
     requestPtr->cseq = rtsp::CSeq(); // FIXME? no response required
     rtsp::SetRequestSession(requestPtr.get(), target.mediaSession);
-    (*targetSession)->forwardRequest(_handle, std::string(), requestPtr);
+    (*targetSession)->forwardRequest(_handle, std::string(), std::string(), requestPtr);
 }
 
 void Session::teardownMediaSession(const rtsp::MediaSessionId& mediaSession) noexcept

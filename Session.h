@@ -82,6 +82,7 @@ private:
     bool forwardRequest(
         std::shared_ptr<SessionHandle>& sourceSession,
         const std::string& sourceUri,
+        const std::string& sourceMediaSession,
         std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
     bool forwardResponse(
         ForwardedRequest& sourceRequest,
