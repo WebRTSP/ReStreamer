@@ -221,6 +221,8 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
         if(authRequired())
             return isValidCookie(authCookie());
         break;
+    default:
+        break;
     }
 
     return ServerSession::authorize(requestPtr);
