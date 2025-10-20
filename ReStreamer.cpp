@@ -287,7 +287,7 @@ void PostDirContent(
         list += ": ";
 
         GDateTimePtr timePtr(g_date_time_new_from_unix_utc(pair.second));
-        GCharPtr isoTime(time ? g_date_time_format_iso8601(timePtr.get()) : nullptr);
+        GCharPtr isoTime(timePtr ? g_date_time_format_iso8601(timePtr.get()) : nullptr);
         if(isoTime) {
             list += isoTime.get();
         } else {
