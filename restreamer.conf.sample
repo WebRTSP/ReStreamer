@@ -27,39 +27,11 @@ streamers: (
     public: true
   },
   {
-    name: "Konský Grúň",
-    url: "rtsp://stream.tmr.sk:1935/tmr/STREAM17.stream",
-    description: "rtsp://stream.tmr.sk:1935/tmr/STREAM17.stream",
-    force-h264-profile-level-id: "42c015",
-    public: true
-  },
-  {
     name: "Štrbské pleso",
     url: "rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream",
     description: "rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream",
     force-h264-profile-level-id: "42c015",
     public: true
-  },
-  {
-    name: "Bedford Hills",
-    url: "rtsp://73.114.177.111/axis-media/media.amp",
-    description: "rtsp://73.114.177.111/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015",
-    public: true
-  },
-  {
-    name: "Norwich",
-    url: "rtsp://37.157.51.30/axis-media/media.amp",
-    description: "rtsp://37.157.51.30/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015",
-    public: true
-  },
-  {
-    name: "Montana",
-    url: "rtsp://64.187.201.16/axis-media/media.amp",
-    description: "rtsp://64.187.201.16/axis-media/media.amp",
-    force-h264-profile-level-id: "42c015",
-    restream: false
   },
   {
     name: "Western Cape",
