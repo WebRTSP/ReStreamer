@@ -135,6 +135,8 @@ parts:
     after:
       - gstreamer
       - libcamera
+    build-snaps:
+      - node/22/stable
     build-packages:
       - g++
       - make
