@@ -88,7 +88,7 @@ parts:
   libcamera:
     plugin: meson
     source: https://github.com/raspberrypi/libcamera.git
-    source-branch: v0.3.2+rpt20240927
+    source-branch: v0.5.2+rpt20250903
     after:
       - gstreamer
     build-packages:
