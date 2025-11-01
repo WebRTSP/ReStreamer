@@ -350,7 +350,8 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     continue;
                 }
 
-                if(streamerType != StreamerConfig::Type::Record &&
+                if(streamerType != StreamerConfig::Type::Test &&
+                   streamerType != StreamerConfig::Type::Record &&
                    streamerType != StreamerConfig::Type::FilePlayer &&
                    streamerType != StreamerConfig::Type::Proxy &&
                    streamerType != StreamerConfig::Type::Pipeline &&
