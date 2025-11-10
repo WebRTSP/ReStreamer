@@ -6,23 +6,28 @@
 
 static std::shared_ptr<spdlog::logger> Logger;
 
+
 void InitReStreamerLogger(spdlog::level::level_enum level)
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
-
-    Logger = std::make_shared<spdlog::logger>("ReStreamer", sink);
+    if(!Logger) {
+        Logger = spdlog::stdout_logger_st("ReStreamer");
+#ifdef SNAPCRAFT_BUILD
+        Logger->set_pattern("[%n] [%l] %v");
+#endif
+    }
 
     Logger->set_level(level);
 }
 
 const std::shared_ptr<spdlog::logger>& ReStreamerLog()
 {
-    if(!Logger)
-#ifndef NDEBUG
-        InitReStreamerLogger(spdlog::level::debug);
-#else
+    if(!Logger) {
+#ifdef NDEBUG
         InitReStreamerLogger(spdlog::level::info);
+#else
+        InitReStreamerLogger(spdlog::level::debug);
 #endif
+    }
 
     return Logger;
 }
