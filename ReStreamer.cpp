@@ -109,12 +109,15 @@ void CleanupAuthTokens(Session::SharedData* sessionsSharedData)
 void ScheduleAuthTokensCleanup(Session::SharedData* sessionsSharedData) {
     GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(AuthTokenCleanupInterval));
     GSource* timeoutSource = timeoutSourcePtr.get();
-    g_source_set_callback(timeoutSource,
+    g_source_set_callback(
+        timeoutSource,
         [] (gpointer userData) -> gboolean {
             Session::SharedData* sessionsSharedData = reinterpret_cast<Session::SharedData*>(userData);
             CleanupAuthTokens(sessionsSharedData);
             return false;
-        }, sessionsSharedData, nullptr);
+        },
+        sessionsSharedData,
+        nullptr);
     GMainContext* threadContext = g_main_context_get_thread_default();
     g_source_attach(timeoutSource, threadContext ? threadContext : g_main_context_default());
 }
@@ -299,7 +302,10 @@ void PostDirContent(
         list += "\r\n";
     }
 
-    CallbackData* callbackData = new CallbackData { monitorContext->streamer, sharedData, std::move(list) };
+    CallbackData* callbackData = new CallbackData {
+        monitorContext->streamer,
+        sharedData,
+        std::move(list) };
     g_source_set_callback(
         idleSource,
         [] (gpointer userData) -> gboolean {
@@ -547,7 +553,8 @@ void ClientDisconnected(client::WsClient& client)
     Log()->info("Scheduling reconnect withing \"{}\" seconds...", reconnectTimeout);
     GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(reconnectTimeout));
     GSource* timeoutSource = timeoutSourcePtr.get();
-    g_source_set_callback(timeoutSource,
+    g_source_set_callback(
+        timeoutSource,
         [] (gpointer userData) -> gboolean {
             static_cast<client::WsClient*>(userData)->connect();
             return false;
