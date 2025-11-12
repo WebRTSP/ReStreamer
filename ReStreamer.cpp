@@ -315,7 +315,7 @@ void PostDirContent(
             const std::string& list = callbackData->list;
 
             Log()->debug("Dir content changed for \"{}\"", streamer);
-            Log()->debug(list);
+            Log()->trace(list);
 
             callbackData->sharedData->mountpointsListsCache[streamer] = list;
 
