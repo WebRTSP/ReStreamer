@@ -31,6 +31,9 @@ public:
         const rtsp::Session::SendResponse& sendResponse) noexcept;
     ~Session();
 
+    const std::shared_ptr<spdlog::logger>& log() const
+        { return _log; }
+
 protected:
     bool listEnabled(const std::string& uri) noexcept override;
     bool playEnabled(const std::string& uri) noexcept override;
@@ -95,6 +98,9 @@ private:
 private:
     const Config *const _config;
     SharedData *const _sharedData;
+
+    const std::shared_ptr<spdlog::logger> _log;
+
     std::shared_ptr<SessionHandle> _handle;
 
     // reqest target side data

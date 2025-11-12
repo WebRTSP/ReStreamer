@@ -9,8 +9,6 @@
 #include "Log.h"
 
 
-static const auto Log = ReStreamerLog;
-
 class Session::SessionHandle
 {
 public:
@@ -30,7 +28,10 @@ Session::Session(
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
     ServerSession(config->webRTCConfig, createPeer, sendRequest, sendResponse),
-    _config(config), _sharedData(sharedData), _handle(std::make_shared<SessionHandle>(this))
+    _config(config),
+    _sharedData(sharedData),
+    _log(MakeReStreamerLogger(sessionLogId)),
+    _handle(std::make_shared<SessionHandle>(this))
 {
 }
 
@@ -42,7 +43,10 @@ Session::Session(
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
     ServerSession(config->webRTCConfig, createPeer, createRecordPeer, sendRequest, sendResponse),
-    _config(config), _sharedData(sharedData), _handle(std::make_shared<SessionHandle>(this))
+    _config(config),
+    _sharedData(sharedData),
+    _log(MakeReStreamerLogger(sessionLogId)),
+    _handle(std::make_shared<SessionHandle>(this))
 {
 }
 
@@ -147,7 +151,7 @@ bool Session::authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) n
 {
     auto it = _config->streamers.find(requestPtr->uri);
     if(it == _config->streamers.end()) {
-        Log()->error("[{}] Can't find streamer \"{}\"", sessionLogId, requestPtr->uri);
+        log()->error("Can't find streamer \"{}\"", requestPtr->uri);
         return false;
     }
 
@@ -406,20 +410,20 @@ bool Session::onSubscribeRequest(
     RecordMountpointData& data = _sharedData->recordMountpointsData[requestPtr->uri];
     auto selfIt = data.subscriptions.find(this);
     if(selfIt != data.subscriptions.end()) {
-        Log()->error("[{}] Second try to subscribe to the same streamer \"{}\"", sessionLogId, requestPtr->uri);
+        log()->error("Second try to subscribe to the same streamer \"{}\"", requestPtr->uri);
         return false;
     }
 
     rtsp::MediaSessionId mediaSessionId = nextSessionId();
     if(!data.recording) {
-        Log()->info("[{}] Streamer \"{}\" not active yet. Subscribing...", sessionLogId, requestPtr->uri);
+        log()->info("Streamer \"{}\" not active yet. Subscribing...", requestPtr->uri);
         data.subscriptions.emplace(this, mediaSessionId);
     }
 
     sendOkResponse(requestPtr->cseq, mediaSessionId);
 
     if(data.recording) {
-        Log()->info("[{}] Streamer \"{}\" already active. Starting record to client...", sessionLogId, requestPtr->uri);
+        log()->info("Streamer \"{}\" already active. Starting record to client...", requestPtr->uri);
         startRecordToClient(requestPtr->uri, mediaSessionId);
     }
 
@@ -536,7 +540,7 @@ bool Session::forwardRequest(
         assert(added);
     }
 
-    Log()->debug(
+    log()->debug(
         "Forwarding request:\n"
         "[{}] -> [{}]\n"
         "Uri: \"{}\" -> \"{}\"\n"
@@ -617,9 +621,8 @@ bool Session::forwardResponse(
             } else if(clientSesion2agentSesionIt != _clientMediaSession2agentMediaSession.end()) {
                 rtsp::SetResponseSession(responsePtr.get(), clientSesion2agentSesionIt->second.mediaSession);
             } else if(request.method != rtsp::Method::TEARDOWN) { // TEARDOWN removes media session
-                Log()->error(
-                    "[{}] Can't find proxy media sesion for response with session \"{}\"",
-                    sessionLogId,
+                log()->error(
+                    "Can't find proxy media sesion for response with session \"{}\"",
                     mediaSessionId);
 
                 assert(false);
