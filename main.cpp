@@ -370,11 +370,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 const char* recordingsDir = nullptr;
                 config_setting_lookup_string(streamerConfig, "recordings-dir", &recordingsDir);
 
-                if(streamerType == StreamerConfig::Type::Record && !recordingsDir) {
-                    Log()->warn("Missing recordings target dir. Streamer \"{}\" skipped.", name);
-                    continue;
-                }
-
                 int recordingsDirMaxSize = 1024;
                 config_setting_lookup_int(streamerConfig, "recordings-dir-max-size", &recordingsDirMaxSize);
                 if(recordingsDirMaxSize < 0) recordingsDirMaxSize = 0;
@@ -384,7 +379,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 if(recordingChunkSize < 0) recordingChunkSize = 0;
 
                 std::optional<RecordConfig> recordConfig;
-                if(streamerType == StreamerConfig::Type::Record) {
+                if(streamerType == StreamerConfig::Type::Record && recordingsDir) {
                     g_autofree gchar* recorderDir = g_uri_escape_string(name, " ", false);
                     recordConfig.emplace(
                         !basePath || g_path_is_absolute(recordingsDir) != FALSE ?
