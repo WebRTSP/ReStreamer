@@ -754,8 +754,10 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if(config.useServerMode())
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+    if(config.useServerMode() && config.agentsConfig.useCoturn)
         config.publicIp = DetectPublicIP(*config.webRTCConfig);
+#endif
 
 #if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
     if(!disableCoturn)
