@@ -91,8 +91,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             loadedConfig.port = static_cast<unsigned short>(wsPort);
         } else if(CONFIG_TRUE == config_lookup_int(&config, "port", &wsPort)) { // for backward compatibility
             loadedConfig.port = static_cast<unsigned short>(wsPort);
-        } else {
-            loadedConfig.port = 0;
         }
 
         int loopbackOnly = false;
@@ -104,8 +102,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         int httpPort = 0;
         if(CONFIG_TRUE == config_lookup_int(&config, "http-port", &httpPort)) {
             loadedHttpConfig.port = static_cast<unsigned short>(httpPort);
-        } else {
-            loadedHttpConfig.port = 0;
         }
 
         const char* stunServer = nullptr;
