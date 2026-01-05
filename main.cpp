@@ -184,34 +184,6 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
-        config_setting_t* agentsConfig = config_lookup(&config, "agents");
-        if(agentsConfig && CONFIG_TRUE == config_setting_is_group(agentsConfig)) {
-            const char* agentsStunServer = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(agentsConfig, "stun-server", &agentsStunServer)) {
-                if(0 == g_ascii_strncasecmp(agentsStunServer, "stun://", 7)) {
-                    loadedConfig.agentsConfig.iceServers.emplace_back(agentsStunServer);
-                } else {
-                    Log()->error("STUN server URL should start with \"stun://\"");
-                }
-            }
-
-            const char* agentsTurnServer = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(agentsConfig, "turn-server", &agentsTurnServer)) {
-               if(0 == g_ascii_strncasecmp(agentsTurnServer, "turn://", 7)) {
-                    loadedConfig.agentsConfig.iceServers.emplace_back(agentsTurnServer);
-                } else {
-                    Log()->error("TURN server URL should start with \"turn://\"");
-               }
-            }
-
-            int useCoturn = FALSE;
-            if(CONFIG_TRUE == config_setting_lookup_bool(agentsConfig, "use-coturn", &useCoturn)) {
-                loadedConfig.agentsConfig.useCoturn = useCoturn != FALSE;
-            }
-        }
-#endif
-
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
             int logLevel = 0;
@@ -262,6 +234,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         }
 
 #if !BUILD_AS_CAMERA_STREAMER && !BUILD_AS_V4L2_STREAMER
+        bool hasProxyStreamers = false;
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
         if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
             const int streamersCount = config_setting_length(streamersConfig);
@@ -399,6 +372,10 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     streamerUri = uri;
                 }
 
+                if(streamerType == StreamerConfig::Type::Proxy) {
+                    hasProxyStreamers = true;
+                }
+
                 g_autofree gchar* escapedName = g_uri_escape_string(name, nullptr, false);
                 loadedConfig.streamers.emplace(
                     escapedName,
@@ -422,6 +399,34 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                             std::string(forceH264ProfileLevelId) :
                             std::string(),
                         recordConfig });
+            }
+        }
+
+        loadedConfig.agentsConfig.useCoturn = loadedConfig.agentsConfig.useCoturn || hasProxyStreamers;
+
+        config_setting_t* agentsConfig = config_lookup(&config, "agents");
+        if(agentsConfig && CONFIG_TRUE == config_setting_is_group(agentsConfig)) {
+            const char* agentsStunServer = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(agentsConfig, "stun-server", &agentsStunServer)) {
+                if(0 == g_ascii_strncasecmp(agentsStunServer, "stun://", 7)) {
+                    loadedConfig.agentsConfig.iceServers.emplace_back(agentsStunServer);
+                } else {
+                    Log()->error("STUN server URL should start with \"stun://\"");
+                }
+            }
+
+            const char* agentsTurnServer = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(agentsConfig, "turn-server", &agentsTurnServer)) {
+               if(0 == g_ascii_strncasecmp(agentsTurnServer, "turn://", 7)) {
+                    loadedConfig.agentsConfig.iceServers.emplace_back(agentsTurnServer);
+                } else {
+                    Log()->error("TURN server URL should start with \"turn://\"");
+               }
+            }
+
+            int useCoturn = FALSE;
+            if(CONFIG_TRUE == config_setting_lookup_bool(agentsConfig, "use-coturn", &useCoturn)) {
+                loadedConfig.agentsConfig.useCoturn = useCoturn != FALSE;
             }
         }
 #endif
