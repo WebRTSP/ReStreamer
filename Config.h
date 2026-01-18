@@ -106,11 +106,7 @@ struct AgentsConfig
 {
     WebRTCConfig::IceServers iceServers;
 
-#ifdef SNAPCRAFT_BUILD
-    bool useCoturn = true;
-#else
     bool useCoturn = false;
-#endif
 };
 #endif
 
