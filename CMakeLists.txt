@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_CXX_STANDARD 14)
 
+add_compile_options("$<$<CONFIG:RelWithDebInfo>:-fno-omit-frame-pointer;-fsanitize=address>")
+add_compile_options("$<$<CONFIG:Debug>:-fno-omit-frame-pointer;-fsanitize=address>")
+add_link_options("$<$<CONFIG:RelWithDebInfo>:-fsanitize=address>")
+add_link_options("$<$<CONFIG:Debug>:-fsanitize=address>")
+
 project(ReStreamer)
 
 option(CAMERA_STREAMER "Build as camera streamer app" OFF)
