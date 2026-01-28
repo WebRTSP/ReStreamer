@@ -125,7 +125,7 @@ parts:
       - PKG_CONFIG_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
       - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
     cmake-parameters:
-      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
     override-pull: |
         craftctl default
@@ -151,6 +151,7 @@ parts:
       - libwebsockets19t64
       - libwebsockets-evlib-glib
       - pwgen
+      - libasan8
 apps:
   ReStreamer:
     command: opt/${SNAPCRAFT_PROJECT_NAME}/bin/ReStreamer
