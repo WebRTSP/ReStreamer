@@ -731,7 +731,6 @@ int ReStreamerMain(
         }
     }
 
-    std::unique_ptr<signalling::WsServer> serverPtr;
     std::unique_ptr<client::WsClient> signallingClient;
     if(config.useAgentMode()) {
         assert(config.signallingServer.has_value());
@@ -748,6 +747,7 @@ int ReStreamerMain(
             std::bind(ClientDisconnected, std::placeholders::_1));
     }
 
+    std::unique_ptr<signalling::WsServer> serverPtr;
     if(config.useServerMode()) {
         serverPtr = std::make_unique<signalling::WsServer>(
             config,
