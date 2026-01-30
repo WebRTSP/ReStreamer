@@ -10,7 +10,7 @@ struct SessionAuthTokenData {
 
 struct RecordMountpointData {
     bool recording = false;
-    std::unordered_map<ServerSession*, rtsp::MediaSessionId> subscriptions;
+    std::unordered_map<rtsp::ServerSession*, rtsp::MediaSessionId> subscriptions;
 };
 
 class Session;

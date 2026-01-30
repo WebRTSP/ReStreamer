@@ -3,13 +3,13 @@
 #include <map>
 #include <unordered_map>
 
-#include "Signalling/ServerSession.h"
+#include "RtspSession/ServerSession.h"
 
 #include "Config.h"
 #include "SessionsSharedData.h"
 
 
-class Session : public ServerSession
+class Session : public rtsp::ServerSession
 {
 public:
     typedef ::SessionAuthTokenData AuthTokenData;
@@ -45,16 +45,16 @@ protected:
 
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
     bool onGetParameterRequest(
-        std::unique_ptr<rtsp::Request>&) noexcept override;
+        std::unique_ptr<rtsp::Request>&&) noexcept override;
 #endif
     bool onListRequest(
-        std::unique_ptr<rtsp::Request>&) noexcept override;
+        std::unique_ptr<rtsp::Request>&&) noexcept override;
     bool onSubscribeRequest(
-        std::unique_ptr<rtsp::Request>&) noexcept override;
+        std::unique_ptr<rtsp::Request>&&) noexcept override;
 
     bool handleResponse(
         const rtsp::Request&,
-        std::unique_ptr<rtsp::Response>&) noexcept override;
+        std::unique_ptr<rtsp::Response>&&) noexcept override;
 
     bool isProxyRequest(const rtsp::Request&) noexcept override;
 

@@ -511,7 +511,7 @@ CreateRecordPeer(
         return nullptr;
 }
 
-static std::unique_ptr<ServerSession> CreateSession(
+static std::unique_ptr<rtsp::ServerSession> CreateSession(
     const Config* config,
     MountPoints* mountPoints,
     Session::SharedData* sharedData,
@@ -572,10 +572,10 @@ static void OnRecorderConnected(Session::SharedData* sharedData, const std::stri
 
     data.recording = true;
 
-    std::unordered_map<ServerSession*, rtsp::MediaSessionId> subscriptions;
+    std::unordered_map<rtsp::ServerSession*, rtsp::MediaSessionId> subscriptions;
     data.subscriptions.swap(subscriptions);
     for(auto& session2session: subscriptions) {
-        ServerSession* session = session2session.first;
+        rtsp::ServerSession* session = session2session.first;
         const rtsp::MediaSessionId& mediaSession = session2session.second;
         session->startRecordToClient(uri, mediaSession);
     }

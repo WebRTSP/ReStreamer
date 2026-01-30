@@ -76,7 +76,7 @@ Session::~Session() {
             cseq,
             std::string(),
             responsePtr.get());
-        rtsp::Session::handleResponse(responsePtr);
+        rtsp::Session::handleResponse(std::move(responsePtr));
     }
     assert(_forwardedRequests.empty());
 
@@ -234,12 +234,12 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
 
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
 bool Session::onGetParameterRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     const std::string& contentType = rtsp::RequestContentType(*requestPtr);
 
     if(contentType.empty())
-        return ServerSession::onGetParameterRequest(requestPtr);
+        return ServerSession::onGetParameterRequest(std::move(requestPtr));
 
     if(contentType != rtsp::TextParametersContentType)
         return false;
@@ -312,7 +312,7 @@ bool Session::listEnabled(const std::string& uri) noexcept
 }
 
 bool Session::onListRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     const std::string& uri = requestPtr->uri;
     const std::string& contentType = rtsp::RequestContentType(*requestPtr);
@@ -395,7 +395,7 @@ bool Session::onListRequest(
 }
 
 bool Session::onSubscribeRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     auto it = _config->streamers.find(requestPtr->uri);
     if(it == _config->streamers.end())
@@ -432,7 +432,7 @@ bool Session::onSubscribeRequest(
 
 bool Session::handleResponse(
     const rtsp::Request& request,
-    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
+    std::unique_ptr<rtsp::Response>&& responsePtr) noexcept
 {
     auto it = _forwardedRequests.find(request.cseq);
     if(it != _forwardedRequests.end()) {
@@ -441,7 +441,7 @@ bool Session::handleResponse(
         _forwardedRequests.erase(it);
         return success;
     } else
-        return ServerSession::handleResponse(request, responsePtr);
+        return ServerSession::handleResponse(request, std::move(responsePtr));
 }
 
 bool Session::isProxyRequest(const rtsp::Request& request) noexcept

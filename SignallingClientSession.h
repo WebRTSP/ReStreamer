@@ -1,11 +1,11 @@
 #pragma once
 
 class Config; // #include "Config.h"
-#include "Signalling/ServerSession.h"
+#include "RtspSession/ServerSession.h"
 class SessionsSharedData; // #include "SessionsSharedData.h"
 
 
-class SignallingClientSession : public ServerSession
+class SignallingClientSession : public rtsp::ServerSession
 {
 public:
     typedef SessionsSharedData SharedData;
@@ -22,7 +22,7 @@ public:
 protected:
     const WebRTCConfigPtr& webRTCConfig() const override { return _webRTCConfig; }
 
-    bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onDescribeRequest(std::unique_ptr<rtsp::Request>&&) noexcept override;
 
     bool onGetParameterResponse(
         const rtsp::Request&,

@@ -34,7 +34,8 @@ bool SignallingClientSession::onConnected() noexcept
     return true;
 }
 
-bool SignallingClientSession::onDescribeRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool SignallingClientSession::onDescribeRequest(
+    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     _pendingRequests.emplace_back(std::move(requestPtr));
     if(_iceServersRequest)
@@ -87,7 +88,7 @@ bool SignallingClientSession::onGetParameterResponse(
 
     auto pendingRequests = std::move(_pendingRequests);
     for(auto& request: pendingRequests) {
-        ServerSession::onDescribeRequest(request);
+        ServerSession::onDescribeRequest(std::move(request));
     }
 
     return true;

@@ -19,6 +19,7 @@
 #include "RtStreaming/GstRtStreaming/Log.h"
 #include "RtStreaming/GstRtStreaming/LibGst.h"
 
+#include "RtspSession/Log.h"
 #include "Signalling/Log.h"
 
 #include "Client/Log.h"
