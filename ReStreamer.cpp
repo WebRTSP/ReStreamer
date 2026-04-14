@@ -29,7 +29,7 @@
 #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstPipelineStreamer2.h"
 #include "RtStreaming/GstRtStreaming/GstCameraStreamer.h"
-#include "RtStreaming/GstRtStreaming/GstV4L2Streamer.h"
+#include "RtStreaming/GstRtStreaming/GstV4L2ReStreamer.h"
 
 #include "Log.h"
 #include "Session.h"
@@ -696,9 +696,9 @@ int ReStreamerMain(
         case StreamerConfig::Type::V4L2:
             mountPoints.emplace(
                 pair.first,
-                std::make_unique<GstV4L2Streamer>(
+                std::make_unique<GstV4L2ReStreamer>(
                     pair.second.edidFilePath,
-                    std::optional<GstV4L2Streamer::VideoResolution>(),
+                    std::optional<GstV4L2ReStreamer::VideoResolution>(),
                     std::optional<std::string>(),
                     pair.second.useHwEncoder));
             break;

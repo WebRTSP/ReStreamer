@@ -232,7 +232,7 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
     return ServerSession::authorize(requestPtr);
 }
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
 bool Session::onGetParameterRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {

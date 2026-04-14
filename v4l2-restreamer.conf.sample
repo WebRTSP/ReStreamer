@@ -19,7 +19,7 @@ http-port: 5080
 #  token: "token"
 #}
 
-#realm = "V4L2Streamer"
+#realm = "V4L2ReStreamer"
 
 # TLS is mandatory for authorization!
 #users: (

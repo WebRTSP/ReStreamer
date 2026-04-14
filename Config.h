@@ -101,7 +101,7 @@ struct StreamerConfig
     bool useHwEncoder = true;
 };
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
 struct AgentsConfig
 {
     WebRTCConfig::IceServers iceServers;
@@ -132,7 +132,7 @@ struct Config : public signalling::Config
 
     std::optional<std::string> publicIp;
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     AgentsConfig agentsConfig;
 #endif
 

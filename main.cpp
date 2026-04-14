@@ -33,8 +33,8 @@ static const auto Log = ReStreamerLog;
 
 #if BUILD_AS_CAMERA_STREAMER
 #define CONFIG_FILE "camera-streamer.conf"
-#elif BUILD_AS_V4L2_STREAMER
-#define CONFIG_FILE "v4l2-streamer.conf"
+#elif BUILD_AS_V4L2_RESTREAMER
+#define CONFIG_FILE "v4l2-restreamer.conf"
 #else
 #define CONFIG_FILE "restreamer.conf"
 #endif
@@ -51,14 +51,14 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     http::Config loadedHttpConfig = *httpConfig;
     Config loadedConfig = *config;
 
-#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
+#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_RESTREAMER
     StreamerConfig streamerConfig;
     streamerConfig.visibility = StreamerConfig::Visibility::Auto;
 #endif
 
 #if BUILD_AS_CAMERA_STREAMER
     streamerConfig.type = StreamerConfig::Type::Camera;
-#elif BUILD_AS_V4L2_STREAMER
+#elif BUILD_AS_V4L2_RESTREAMER
     streamerConfig.type = StreamerConfig::Type::V4L2;
 #endif
 
@@ -230,7 +230,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
-#if !BUILD_AS_CAMERA_STREAMER && !BUILD_AS_V4L2_STREAMER
+#if !BUILD_AS_CAMERA_STREAMER && !BUILD_AS_V4L2_RESTREAMER
         bool hasProxyStreamers = false;
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
         if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
@@ -463,7 +463,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                     Log()->warn("\"framerate\" should be positive. Skipped.");
             }
         }
-#elif BUILD_AS_V4L2_STREAMER
+#elif BUILD_AS_V4L2_RESTREAMER
         const char* edidFilePath;
         if(CONFIG_TRUE == config_lookup_string(&config, "edid-file", &edidFilePath)) {
             streamerConfig.edidFilePath = !basePath || g_path_is_absolute(edidFilePath) != FALSE ?
@@ -472,7 +472,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
         }
 #endif
 
-#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_STREAMER
+#if BUILD_AS_CAMERA_STREAMER || BUILD_AS_V4L2_RESTREAMER
         int useHwEncoder;
         if(CONFIG_TRUE == config_lookup_bool(&config, "use-hw-encoder", &useHwEncoder)) {
             streamerConfig.useHwEncoder = useHwEncoder != FALSE;
@@ -516,7 +516,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     loadedConfig.streamers.emplace(
         "Camera",
         streamerConfig);
-#elif BUILD_AS_V4L2_STREAMER
+#elif BUILD_AS_V4L2_RESTREAMER
     loadedConfig.streamers.emplace(
         "V4L2",
         streamerConfig);
@@ -562,7 +562,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     return success;
 }
 
-#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
 static bool StopCoturn(bool disable)
 {
     g_autoptr(GError) error = nullptr;
@@ -741,7 +741,7 @@ int main(int argc, char *argv[])
     if(!LoadConfig(&httpConfig, &config, basePath))
         return -1;
 
-#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     const bool disableCoturn = config.useAgentMode() || !config.agentsConfig.useCoturn;
     // to workaround "error running snapctl: snap "rtsp-to-webrtsp" has "install-snap" change in progress"
     // have to try multiple times
@@ -756,12 +756,12 @@ int main(int argc, char *argv[])
     }
 #endif
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     if(config.useServerMode() && config.agentsConfig.useCoturn)
         config.publicIp = DetectPublicIP(*config.webRTCConfig);
 #endif
 
-#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     if(!disableCoturn)
         ConfigureCoturn(&config);
 #endif

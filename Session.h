@@ -43,7 +43,7 @@ protected:
     bool isValidCookie(const std::optional<std::string>& authCookie) noexcept;
     bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_STREAMER)
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     bool onGetParameterRequest(
         std::unique_ptr<rtsp::Request>&&) noexcept override;
 #endif
