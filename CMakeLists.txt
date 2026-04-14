@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 if(NOT "$ENV{CRAFT_ARCH_BUILD_FOR}" STREQUAL "arm64")
     add_compile_options("$<$<CONFIG:RelWithDebInfo>:-fno-omit-frame-pointer;-fsanitize=address>")
