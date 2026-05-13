@@ -44,4 +44,4 @@ debug: {
 
 // absolute or relative (based on %SNAP_COMMON% in case of snap package, or current dir in other cases)
 // path to EDID file
-edid-file: "1080p30.edid"
+#edid-file: "some.edid"
