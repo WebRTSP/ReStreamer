@@ -33,7 +33,7 @@ parts:
       - ninja
   gstreamer:
     plugin: meson
-    source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+    source: https://github.com/WebRTSP/gstreamer.git
     source-branch: 1.28
     after:
       - meson-deps
