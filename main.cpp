@@ -588,9 +588,10 @@ static bool StopCoturn(bool disable)
         !g_spawn_check_wait_status(exitStatus, &error))
     {
         Log()->error(
-            disable ?
-                "Failed to disable Coturn: {}" :
-                "Failed to stop Coturn: {}",
+            fmt::runtime(
+                disable ?
+                    "Failed to disable Coturn: {}" :
+                    "Failed to stop Coturn: {}"),
             error->message);
 
         return false;
