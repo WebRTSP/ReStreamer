@@ -25,61 +25,45 @@ layout:
     symlink: $SNAP/opt/${SNAPCRAFT_PROJECT_NAME}/lib
 
 parts:
+  meson-deps:
+    plugin: python
+    source: .
+    python-packages:
+      - meson
+      - ninja
   gstreamer:
     plugin: meson
     source: https://gitlab.freedesktop.org/gstreamer/gstreamer.git
-    source-branch: 1.24
+    source-branch: 1.28
+    after:
+      - meson-deps
     build-packages:
-      - meson
-      - ninja-build
       - flex
       - bison
       - nasm
       - libsrtp2-dev
     meson-parameters:
       - --prefix=/opt/${SNAPCRAFT_PROJECT_NAME}
-      - -Dauto_features=disabled
-      - -Dpython=disabled
+      - --buildtype=release
+      - -Dbase=enabled
+      - -Dgood=enabled
+      - -Dbad=enabled
+      - -Dugly=disabled
       - -Dlibav=disabled
       - -Ddevtools=disabled
+      - -Dges=disabled
       - -Drtsp_server=disabled
       - -Dgst-examples=disabled
+      - -Dpython=disabled
+      - -Dgpl=disabled
+      - -Dbenchmarks=disabled
+      - -Dtools=disabled
       - -Dqt5=disabled
       - -Dqt6=disabled
       - -Dtests=disabled
       - -Dexamples=disabled
       - -Dintrospection=disabled
       - -Dnls=disabled
-      - -Ddoc=disabled
-      - -Dgstreamer:ptp-helper-permissions=none
-      - -Dgpl=disabled
-      - -Dtools=enabled # required for orc
-      - -Dorc=enabled
-      - -Dorc-source=subproject
-      - -Dwebrtc=enabled
-      - -Dlibnice=enabled
-      - -Dlibnice:gupnp=auto
-      - -Dlibnice:gstreamer=enabled
-      - -Dlibnice:crypto-library=auto
-      - -Dbase=enabled
-      - -Dgst-plugins-base:playback=enabled
-      - -Dgst-plugins-base:typefind=enabled
-      - -Dgood=enabled
-      - -Dgst-plugins-good:rtsp=enabled
-      - -Dgst-plugins-good:rtpmanager=enabled
-      - -Dgst-plugins-good:udp=enabled
-      - -Dgst-plugins-good:rtp=enabled
-      - -Dgst-plugins-good:debugutils=enabled
-      - -Dgst-plugins-good:multifile=enabled
-      - -Dgst-plugins-good:isomp4=enabled
-      - -Dbad=enabled
-      - -Dgst-plugins-bad:webrtc=enabled
-      - -Dgst-plugins-bad:codectimestamper=enabled
-      - -Dgst-plugins-bad:videoparsers=enabled
-      - -Dgst-plugins-bad:dtls=enabled
-      - -Dgst-plugins-bad:srtp=enabled
-      - -Dgst-plugins-bad:sctp=enabled
-      - -Dugly=disabled
     stage-packages:
       - libunwind8
       - libdw1
