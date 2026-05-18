@@ -7,7 +7,7 @@ sudo apt install build-essential git cmake ninja-build \
     gsoap libgsoap-dev libmicrohttpd-dev libnice-dev \
     libgstreamer1.0-dev libgstreamer-plugins-bad1.0-dev \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-nice
-
+```
 2. Install Node.js according to ttps://nodejs.org/en/download
 3. Build application:
 ```
