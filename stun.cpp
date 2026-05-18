@@ -169,9 +169,9 @@ std::optional<std::string> DetectPublicIP(const WebRTCConfig& webRTCConfig)
     const std::string publicIp = future.get().first;
     if(publicIp.empty()) {
         log->warn("Failed to detect public IP");
+        return {};
     } else {
         log->info("Detected public IP: {}", publicIp);
+        return publicIp;
     }
-
-    return publicIp;
 }
