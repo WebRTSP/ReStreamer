@@ -2,18 +2,19 @@ cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 20)
 
-if(NOT "$ENV{CRAFT_ARCH_BUILD_FOR}" STREQUAL "arm64")
-    add_compile_options("$<$<CONFIG:RelWithDebInfo>:-fno-omit-frame-pointer;-fsanitize=address>")
-    add_compile_options("$<$<CONFIG:Debug>:-fno-omit-frame-pointer;-fsanitize=address>")
-    add_link_options("$<$<CONFIG:RelWithDebInfo>:-fsanitize=address>")
-    add_link_options("$<$<CONFIG:Debug>:-fsanitize=address>")
-endif()
-
 project(ReStreamer)
 
 option(CAMERA_STREAMER "Build as camera streamer app" OFF)
 option(V4L2_RESTREAMER "Build as app to restream video from V4L2 device" OFF)
 option(ONVIF_SUPPORT "ONVIF support" ON)
+option(ADDRESS_SANITIZER "Enable address sanitazer" OFF)
+
+if(ADDRESS_SANITIZER)
+    add_compile_options("$<$<CONFIG:RelWithDebInfo>:-fno-omit-frame-pointer;-fsanitize=address>")
+    add_compile_options("$<$<CONFIG:Debug>:-fno-omit-frame-pointer;-fsanitize=address>")
+    add_link_options("$<$<CONFIG:RelWithDebInfo>:-fsanitize=address>")
+    add_link_options("$<$<CONFIG:Debug>:-fsanitize=address>")
+endif()
 
 if(DEFINED ENV{SNAPCRAFT_PROJECT_NAME})
     add_definitions(-DSNAPCRAFT_BUILD=1)
