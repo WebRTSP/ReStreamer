@@ -118,7 +118,7 @@ parts:
     after:
       - gstreamer
     build-snaps:
-      - node/22/stable
+      - node/24/stable
     build-packages:
       - g++
       - make
