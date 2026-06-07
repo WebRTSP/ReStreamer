@@ -494,8 +494,10 @@ bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noe
     auto [streamerName, substream] = rtsp::SplitUri(requestPtr->uri);
 
     auto agentMountpointIt = _sharedData->agentsMountpoints.find(streamerName);
-    if(agentMountpointIt == _sharedData->agentsMountpoints.end())
-        return false;
+    if(agentMountpointIt == _sharedData->agentsMountpoints.end()) {
+        sendNotFoundResponse(requestPtr->cseq);
+        return true;
+    }
 
     rtsp::MediaSessionId agentMediaSession;
     if(!mediaSessionId.empty()) {
