@@ -294,7 +294,7 @@ bool Session::onGetParameterRequest(
 
 bool Session::listEnabled(const std::string& uri) noexcept
 {
-    if(uri == "*")
+    if(uri == rtsp::WildcardUri)
         return true;
 
     auto streamerIt = _config->streamers.find(uri);
