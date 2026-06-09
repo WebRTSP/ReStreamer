@@ -1,5 +1,6 @@
 [![rtsp-to-webrtsp](https://snapcraft.io/rtsp-to-webrtsp/badge.svg)](https://snapcraft.io/rtsp-to-webrtsp)
 [![webrtsp-camera-streamer](https://snapcraft.io/webrtsp-camera-streamer/badge.svg)](https://snapcraft.io/webrtsp-camera-streamer)
+[![webrtsp-hdmi-restreamer](https://snapcraft.io/webrtsp-hdmi-restreamer/badge.svg)](https://snapcraft.io/webrtsp-hdmi-restreamer)
 
 # Media URLs ReStreamer
 
