@@ -8,7 +8,7 @@ sudo apt install build-essential git cmake ninja-build \
     libgstreamer1.0-dev libgstreamer-plugins-bad1.0-dev \
     gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-nice
 ```
-2. Install Node.js according to ttps://nodejs.org/en/download
+2. Install Node.js according to https://nodejs.org/en/download
 3. Build application:
 ```
 git clone https://github.com/WebRTSP/ReStreamer.git --recursive
