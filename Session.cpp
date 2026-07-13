@@ -366,7 +366,8 @@ bool Session::onListRequest(
         case StreamerConfig::Type::Proxy: {
             if(contentType.empty()) {
                 sendCachedListResponse();
-            } else {
+                return true;
+            } else if(contentType == rtsp::TextParametersContentType) {
                 rtsp::Parameters inList;
                 if(rtsp::ParseParameters(requestPtr->body, &inList)) {
                     std::string list;
@@ -381,11 +382,10 @@ bool Session::onListRequest(
                     _sharedData->agentsMountpoints[uri] = this;
                     _sharedData->mountpointsListsCache[uri] = list;
                     sendOkResponse(requestPtr->cseq);
-                } else {
-                    return false;
+                    return true;
                 }
             }
-            return true;
+            break;
         }
         default:
             break;
