@@ -8,6 +8,7 @@
 
 #include <gio/gio.h>
 
+#include <nice/nice.h>
 #include <stun/usages/bind.h>
 
 #include "RtStreaming/GstRtStreaming/Helpers.h"
@@ -75,12 +76,20 @@ std::optional<std::string> DetectPublicIP(const WebRTCConfig& webRTCConfig)
         sockaddr_storage publicAddressStorage;
         socklen_t publicAddressStorageLen = sizeof(publicAddressStorage);
 
+#if NICE_CHECK_VERSION(0, 1, 24)
         const StunUsageBindReturn bindRet = stun_usage_bind_run_compat(
             ai->ai_addr,
             ai->ai_addrlen,
             &publicAddressStorage,
             &publicAddressStorageLen,
             STUN_COMPATIBILITY_RFC5389);
+#else
+        const StunUsageBindReturn bindRet = stun_usage_bind_run(
+            ai->ai_addr,
+            ai->ai_addrlen,
+            &publicAddressStorage,
+            &publicAddressStorageLen);
+#endif
         if(bindRet != STUN_USAGE_BIND_RETURN_SUCCESS) {
             log->error("Failed to do STUN bind requst");
             continue;
