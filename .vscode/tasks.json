@@ -13,7 +13,9 @@
 				"isDefault": true
 			},
 			"problemMatcher": [],
-			"detail": "CMake template build task"
+			"presentation": {
+				"clear": true
+			}
 		}
 	]
 }
