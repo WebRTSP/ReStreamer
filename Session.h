@@ -78,12 +78,12 @@ private:
     void startRecord(const std::string& uri, const rtsp::MediaSessionId& mediaSession) noexcept;
 
     rtsp::MediaSessionId registerAgentMediaSession(
-        std::shared_ptr<SessionHandle>& agentSession,
+        const std::shared_ptr<SessionHandle>& agentSession,
         const std::string& uri,
         const rtsp::MediaSessionId& mediaSession) noexcept;
 
     bool forwardRequest(
-        std::shared_ptr<SessionHandle>& sourceSession,
+        const std::shared_ptr<SessionHandle>& sourceSession,
         const std::string& sourceUri,
         const std::string& sourceMediaSession,
         std::unique_ptr<rtsp::Request>& requestPtr) noexcept;

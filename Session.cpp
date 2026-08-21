@@ -69,7 +69,7 @@ Session::~Session() {
         const rtsp::CSeq cseq = it->first;
         ++it;
 
-        std::unique_ptr<rtsp::Response > responsePtr = std::make_unique<rtsp::Response>();
+        std::unique_ptr<rtsp::Response> responsePtr = std::make_unique<rtsp::Response>();
         prepareResponse(
             rtsp::StatusCode::BAD_GATEWAY,
             "Bad Gateway",
@@ -524,7 +524,7 @@ bool Session::handleProxyRequest(std::unique_ptr<rtsp::Request>& requestPtr) noe
 }
 
 bool Session::forwardRequest(
-    std::shared_ptr<SessionHandle>& sourceSession,
+    const std::shared_ptr<SessionHandle>& sourceSession,
     const std::string& sourceUri,
     const std::string& sourceMediaSession,
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
@@ -562,7 +562,7 @@ bool Session::forwardRequest(
 }
 
 rtsp::MediaSessionId Session::registerAgentMediaSession(
-    std::shared_ptr<SessionHandle>& agentSession,
+    const std::shared_ptr<SessionHandle>& agentSession,
     const std::string& uri,
     const rtsp::MediaSessionId& mediaSession) noexcept
 {
