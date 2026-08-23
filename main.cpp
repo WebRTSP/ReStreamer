@@ -22,8 +22,6 @@
 #include "RtspSession/Log.h"
 #include "Signalling/Log.h"
 
-#include "Client/Log.h"
-
 #include "Log.h"
 #include "ReStreamer.h"
 #include "stun.h"
@@ -799,8 +797,7 @@ int main(int argc, char *argv[])
     InitHttpServerLogger(config.logLevel);
     InitWsServerLogger(config.logLevel);
     InitWsClientLogger(config.logLevel);
-    InitClientSessionLogger(config.logLevel);
-    InitServerSessionLogger(config.logLevel);
+    rtsp::InitSessionLogger(config.logLevel);
     InitGstRtStreamingLogger(config.logLevel);
     InitReStreamerLogger(config.logLevel);
 

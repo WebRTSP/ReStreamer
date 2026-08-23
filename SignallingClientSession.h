@@ -1,11 +1,11 @@
 #pragma once
 
 class Config; // #include "Config.h"
-#include "RtspSession/ServerSession.h"
+#include "RtspSession/StreamSession.h"
 class SessionsSharedData; // #include "SessionsSharedData.h"
 
 
-class SignallingClientSession : public rtsp::ServerSession
+class SignallingClientSession : public rtsp::StreamSession
 {
 public:
     typedef SessionsSharedData SharedData;
@@ -21,6 +21,8 @@ public:
 
 protected:
     const WebRTCConfigPtr& webRTCConfig() const override { return _webRTCConfig; }
+
+    bool playEnabled(const std::string& /*uri*/) noexcept override;
 
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&&) noexcept override;
 

@@ -9,22 +9,21 @@
 
 #include <spdlog/common.h>
 
-#include "Client/Config.h"
 #include "Signalling/Config.h"
 
 #include "RtStreaming/WebRTCConfig.h"
 
 
-struct SignallingServer : public client::Config
+struct SignallingServer : public WsClientConfig
 {
     SignallingServer(
         const std::string& server,
         const std::string& uri,
         const std::string& token,
         bool useTls) :
-        client::Config {
+        WsClientConfig {
             server,
-            useTls ? signalling::DEFAULT_WSS_PORT : signalling::DEFAULT_WS_PORT,
+            useTls ? WEBRTSP_DEFAULT_WSS_PORT : WEBRTSP_DEFAULT_WS_PORT,
             useTls },
         uri(uri),
         token(token)
@@ -117,7 +116,7 @@ struct CoturnConfig
     std::chrono::seconds passwordTTL = std::chrono::hours(1);
 };
 
-struct Config : public signalling::Config
+struct Config : public WsServerConfig
 {
     spdlog::level::level_enum logLevel = spdlog::level::info;
     spdlog::level::level_enum lwsLogLevel = spdlog::level::warn;
@@ -125,7 +124,7 @@ struct Config : public signalling::Config
     std::optional<SignallingServer> signallingServer;
     bool forceServerMode = false;
 
-    std::map<std::string, StreamerConfig> streamers; // escaped streamer name -> StreamerConfig
+    std::map<std::string, StreamerConfig, std::less<>> streamers; // escaped streamer name -> StreamerConfig
     bool authRequired = true;
 
     std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();

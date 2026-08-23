@@ -16,7 +16,7 @@ SignallingClientSession::SignallingClientSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    ServerSession(config->webRTCConfig, createPeer, sendRequest, sendResponse),
+    StreamSession(config->webRTCConfig, createPeer, {}, sendRequest, sendResponse),
     _config(config),
     _webRTCConfig(std::make_shared<WebRTCConfig>(*_config->webRTCConfig)),
     _sharedData(sharedData)
@@ -32,6 +32,33 @@ bool SignallingClientSession::onConnected() noexcept
         target.token);
 
     return true;
+}
+
+bool SignallingClientSession::playEnabled(const std::string& uri) noexcept
+{
+    auto it = _config->streamers.find(uri);
+    if(it == _config->streamers.end())
+        return false;
+
+    const StreamerConfig& streamerConfig = it->second;
+    switch(streamerConfig.type) {
+        case StreamerConfig::Type::Test:
+        case StreamerConfig::Type::ReStreamer:
+#if ONVIF_SUPPORT
+        case StreamerConfig::Type::ONVIFReStreamer:
+#endif
+        case StreamerConfig::Type::Pipeline:
+        case StreamerConfig::Type::Camera:
+        case StreamerConfig::Type::V4L2:
+            return streamerConfig.visibility == StreamerConfig::Visibility::Auto ||
+                streamerConfig.visibility == StreamerConfig::Visibility::Public;
+        case StreamerConfig::Type::Record:
+        case StreamerConfig::Type::FilePlayer:
+        case StreamerConfig::Type::Proxy:
+            break;
+    }
+
+    return false;
 }
 
 bool SignallingClientSession::onDescribeRequest(
@@ -60,7 +87,7 @@ bool SignallingClientSession::onGetParameterResponse(
 
     _iceServersRequest.reset();
 
-    if(!ServerSession::onGetParameterResponse(request, response))
+    if(!StreamSession::onGetParameterResponse(request, response))
         return false;
 
     rtsp::Parameters parameters;
@@ -88,7 +115,7 @@ bool SignallingClientSession::onGetParameterResponse(
 
     auto pendingRequests = std::move(_pendingRequests);
     for(auto& request: pendingRequests) {
-        ServerSession::onDescribeRequest(std::move(request));
+        StreamSession::onDescribeRequest(std::move(request));
     }
 
     return true;

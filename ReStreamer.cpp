@@ -16,7 +16,7 @@
 #include "RtspParser/RtspParser.h"
 
 #include "Signalling/WsServer.h"
-#include "Client/WsClient.h"
+#include "Signalling/WsClient.h"
 
 #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
 #include "RtStreaming/GstRtStreaming/GstReStreamer.h"
@@ -456,7 +456,7 @@ void FilesMonitorsInitAction(
 
 }
 
-typedef std::map<std::string, std::unique_ptr<GstStreamingSource>> MountPoints;
+typedef std::map<std::string, std::unique_ptr<GstStreamingSource>, std::less<>> MountPoints;
 
 static std::unique_ptr<WebRTCPeer>
 CreatePeer(
@@ -464,7 +464,7 @@ CreatePeer(
     MountPoints* mountPoints,
     const std::string& uri)
 {
-    const auto& [streamerName, substreamName] = rtsp::SplitUri(uri);
+    const auto [streamerName, substreamName] = rtsp::SplitUri(uri);
 
     auto configStreamerIt = config->streamers.find(streamerName);
     if(configStreamerIt == config->streamers.end() || !configStreamerIt->second.restream)
@@ -472,8 +472,10 @@ CreatePeer(
 
     const StreamerConfig& streamerConfig = configStreamerIt->second;
     if(configStreamerIt->second.type == StreamerConfig::Type::FilePlayer) {
-        g_autofree gchar* unEscapedSubstreamName = g_uri_unescape_string(substreamName.c_str(), nullptr);
-        g_autofree gchar* reEscapedSubstreamName = g_uri_escape_string(unEscapedSubstreamName, " ()", false);
+        g_autofree gchar* unEscapedSubstreamName =
+            g_uri_unescape_string(std::string(substreamName).c_str(), nullptr);
+        g_autofree gchar* reEscapedSubstreamName =
+            g_uri_escape_string(unEscapedSubstreamName, " ()", false);
 
         GCharPtr fullPathPtr(g_build_filename(streamerConfig.uri.c_str(), reEscapedSubstreamName, nullptr));
         GCharPtr safePathPtr(g_canonicalize_filename(fullPathPtr.get(), nullptr));
@@ -511,42 +513,9 @@ CreateRecordPeer(
         return nullptr;
 }
 
-static std::unique_ptr<rtsp::ServerSession> CreateSession(
-    const Config* config,
-    MountPoints* mountPoints,
-    Session::SharedData* sharedData,
-    const rtsp::Session::SendRequest& sendRequest,
-    const rtsp::Session::SendResponse& sendResponse)
-{
-    std::unique_ptr<Session> session =
-        std::make_unique<Session>(
-            config,
-            sharedData,
-            std::bind(CreatePeer, config, mountPoints, std::placeholders::_1),
-            std::bind(CreateRecordPeer, config, mountPoints, std::placeholders::_1),
-            sendRequest, sendResponse);
-
-    return session;
-}
-
 namespace {
 
-std::unique_ptr<rtsp::Session> CreateSignallingSession(
-    const Config* config,
-    MountPoints* mountPoints,
-    const Session::SharedData* sharedData,
-    const rtsp::Session::SendRequest& sendRequest,
-    const rtsp::Session::SendResponse& sendResponse)
-{
-    return
-        std::make_unique<SignallingClientSession>(
-            config,
-            sharedData,
-            std::bind(CreatePeer, config, mountPoints, std::placeholders::_1),
-            sendRequest, sendResponse);
-}
-
-void ClientDisconnected(client::WsClient& client)
+void ClientDisconnected(WsClient& client)
 {
     const unsigned reconnectTimeout =
         g_random_int_range(MIN_RECONNECT_TIMEOUT, MAX_RECONNECT_TIMEOUT + 1);
@@ -556,11 +525,73 @@ void ClientDisconnected(client::WsClient& client)
     g_source_set_callback(
         timeoutSource,
         [] (gpointer userData) -> gboolean {
-            static_cast<client::WsClient*>(userData)->connect();
+            static_cast<WsClient*>(userData)->connect();
             return false;
         }, &client, nullptr);
     g_source_attach(timeoutSource, g_main_context_get_thread_default());
 }
+
+struct ServerSessionFactory: public WsServer::SessionFactory
+{
+    ServerSessionFactory(
+        const Config* config,
+        Session::SharedData* sharedData,
+        MountPoints* mountPoints
+    ) : config(config), sharedData(sharedData), mountPoints(mountPoints) {}
+
+    std::unique_ptr<rtsp::Session> createSession(
+        std::optional<std::string>&& authCookie,
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept override
+    {
+        return std::make_unique<Session>(
+            config,
+            sharedData,
+            authCookie,
+            [this] (const std::string& uri) {
+                return CreatePeer(config, mountPoints, uri);
+            },
+            [this] (const std::string& uri) {
+                return CreateRecordPeer(config, mountPoints, uri);
+            },
+            sendRequest,
+            sendResponse);
+    }
+
+private:
+    const Config *const config;
+    Session::SharedData *const sharedData;
+    MountPoints *const mountPoints;
+};
+
+struct ClientSessionFactory: public WsClient::SessionFactory
+{
+    ClientSessionFactory(
+        const Config* config,
+        Session::SharedData* sharedData,
+        MountPoints* mountPoints
+    ) : config(config), sharedData(sharedData), mountPoints(mountPoints) {}
+
+    std::unique_ptr<rtsp::Session> createSession(
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept override
+    {
+        return
+            std::make_unique<SignallingClientSession>(
+                config,
+                sharedData,
+                [this] (const std::string& uri) {
+                    return CreatePeer(config, mountPoints, uri);
+                },
+                sendRequest,
+                sendResponse);
+    };
+
+private:
+    const Config *const config;
+    Session::SharedData *const sharedData;
+    MountPoints *const mountPoints;
+};
 
 }
 
@@ -572,10 +603,10 @@ static void OnRecorderConnected(Session::SharedData* sharedData, const std::stri
 
     data.recording = true;
 
-    std::unordered_map<rtsp::ServerSession*, rtsp::MediaSessionId> subscriptions;
+    std::unordered_map<rtsp::StreamSession*, rtsp::MediaSessionId> subscriptions;
     data.subscriptions.swap(subscriptions);
     for(auto& session2session: subscriptions) {
-        rtsp::ServerSession* session = session2session.first;
+        rtsp::StreamSession* session = session2session.first;
         const rtsp::MediaSessionId& mediaSession = session2session.second;
         session->startRecordToClient(uri, mediaSession);
     }
@@ -731,34 +762,24 @@ int ReStreamerMain(
         }
     }
 
-    std::unique_ptr<client::WsClient> signallingClient;
+    ClientSessionFactory clientSessionFactory(&config, &sessionsSharedData, &mountPoints);
+
+    std::unique_ptr<WsClient> signallingClient;
     if(config.useAgentMode()) {
         assert(config.signallingServer.has_value());
-        signallingClient = std::make_unique<client::WsClient>(
+        signallingClient = std::make_unique<WsClient>(
             *config.signallingServer,
-            loop,
-            std::bind(
-                CreateSignallingSession,
-                &config,
-                &mountPoints,
-                &sessionsSharedData,
-                std::placeholders::_1,
-                std::placeholders::_2),
+            &clientSessionFactory,
             std::bind(ClientDisconnected, std::placeholders::_1));
     }
 
-    std::unique_ptr<signalling::WsServer> serverPtr;
+    ServerSessionFactory serverSessionFactory(&config, &sessionsSharedData, &mountPoints);
+
+    std::unique_ptr<WsServer> serverPtr;
     if(config.useServerMode()) {
-        serverPtr = std::make_unique<signalling::WsServer>(
+        serverPtr = std::make_unique<WsServer>(
             config,
-            loop,
-            std::bind(
-                CreateSession,
-                &config,
-                &mountPoints,
-                &sessionsSharedData,
-                std::placeholders::_1,
-                std::placeholders::_2));
+            &serverSessionFactory);
     }
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
@@ -799,8 +820,8 @@ int ReStreamerMain(
     }
 
     if((!httpServerPtr || httpServerPtr->init()) &&
-        (!serverPtr || serverPtr->init(lwsContext)) &&
-        (!signallingClient || signallingClient->init()))
+        (!serverPtr || serverPtr->init(loop, lwsContext)) &&
+        (!signallingClient || signallingClient->init(loop)))
     {
         if(signallingClient)
             signallingClient->connect();

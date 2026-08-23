@@ -66,7 +66,6 @@ target_link_libraries(${PROJECT_NAME}
     ${LIBNICE_LDFLAGS}
     Http
     RtspParser
-    Client
     Signalling
     RtStreaming)
 if(CAMERA_STREAMER)

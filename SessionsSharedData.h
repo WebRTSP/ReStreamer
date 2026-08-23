@@ -10,7 +10,7 @@ struct SessionAuthTokenData {
 
 struct RecordMountpointData {
     bool recording = false;
-    std::unordered_map<rtsp::ServerSession*, rtsp::MediaSessionId> subscriptions;
+    std::unordered_map<rtsp::StreamSession*, rtsp::MediaSessionId> subscriptions;
 };
 
 class Session;
@@ -18,8 +18,10 @@ struct SessionsSharedData {
     const std::string publicListCache;
     const std::string protectedListCache;
     const std::string agentListCache;
+
     std::unordered_map<std::string, const SessionAuthTokenData> authTokens;
-    std::map<std::string, RecordMountpointData> recordMountpointsData;
-    std::map<std::string, std::string> mountpointsListsCache;
-    std::map<std::string, Session*> agentsMountpoints;
+
+    std::map<std::string, RecordMountpointData, std::less<>> recordMountpointsData;
+    std::map<std::string, std::string, std::less<>> mountpointsListsCache;
+    std::map<std::string, Session*, std::less<>> agentsMountpoints;
 };
