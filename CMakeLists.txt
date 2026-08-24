@@ -72,6 +72,8 @@ else()
     set(VARIANT_SOURCES
         stun.h
         stun.cpp
+        SnapCoturnHelpers.h
+        SnapCoturnHelpers.cpp
         FileMonitor.h
         FileMonitor.cpp
         ServerSession.h
