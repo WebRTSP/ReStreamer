@@ -62,6 +62,7 @@ struct RecordConfig
     const uint64_t maxFileSize;
 };
 
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
 struct StreamerConfig
 {
     enum class Type {
@@ -74,8 +75,6 @@ struct StreamerConfig
         FilePlayer,
         Proxy,
         Pipeline,
-        Camera,
-        V4L2,
     };
 
     enum class Visibility {
@@ -95,10 +94,8 @@ struct StreamerConfig
     std::string description;
     std::string forceH264ProfileLevelId;
     std::optional<RecordConfig> recordConfig;
-    std::optional<std::string> edidFilePath;
-    std::optional<CameraConfig> cameraConfig;
-    bool useHwEncoder = true;
 };
+#endif
 
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
 struct AgentsConfig
@@ -124,7 +121,15 @@ struct Config : public WsServerConfig
     std::optional<SignallingServer> signallingServer;
     bool forceServerMode = false;
 
+#if defined(BUILD_AS_CAMERA_STREAMER)
+    CameraConfig cameraConfig;
+    bool useHwEncoder = true;
+#elif defined(BUILD_AS_V4L2_RESTREAMER)
+    std::optional<std::string> edidFilePath;
+    bool useHwEncoder = true;
+#else
     std::map<std::string, StreamerConfig, std::less<>> streamers; // escaped streamer name -> StreamerConfig
+#endif
     bool authRequired = true;
 
     std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();

@@ -6,7 +6,6 @@
 #include <chrono>
 
 #include <CxxPtr/GlibPtr.h>
-#include <CxxPtr/GioPtr.h>
 #include <CxxPtr/libwebsocketsPtr.h>
 
 #include "Helpers/Actor.h"
@@ -32,8 +31,17 @@
 #include "RtStreaming/GstRtStreaming/GstV4L2ReStreamer.h"
 
 #include "Log.h"
-#include "Session.h"
+#include "SessionsSharedData.h"
+#if defined(BUILD_AS_CAMERA_STREAMER) || defined(BUILD_AS_V4L2_RESTREAMER)
+#include "BasicServerSession.h"
+#else
+#include "ServerSession.h"
+#endif
 #include "SignallingClientSession.h"
+
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
+#include "FileMonitor.h"
+#endif
 
 
 namespace {
@@ -41,13 +49,136 @@ namespace {
 const unsigned AuthTokenCleanupInterval = 15; // seconds
 
 enum {
-    MAX_FILES_TO_CLEANUP = 10,
-
     MIN_RECONNECT_TIMEOUT = 3, // seconds
     MAX_RECONNECT_TIMEOUT = 10, // seconds
 };
 
 const auto Log = ReStreamerLog;
+
+void OnNewAuthToken(
+    SessionsSharedData* sessionsSharedData,
+    const std::string& token,
+    std::chrono::steady_clock::time_point expiresAt)
+{
+    sessionsSharedData->authTokens.emplace(token, SessionAuthTokenData { expiresAt });
+}
+
+void CleanupAuthTokens(SessionsSharedData* sessionsSharedData)
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    auto& authTokens = sessionsSharedData->authTokens;
+    for(auto it = authTokens.begin(); it != authTokens.end();) {
+        if(it->second.expiresAt < now)
+            it = authTokens.erase(it);
+        else
+            ++it;
+    }
+}
+
+void ScheduleAuthTokensCleanup(SessionsSharedData* sessionsSharedData) {
+    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(AuthTokenCleanupInterval));
+    GSource* timeoutSource = timeoutSourcePtr.get();
+    g_source_set_callback(
+        timeoutSource,
+        [] (gpointer userData) -> gboolean {
+            SessionsSharedData* sessionsSharedData = reinterpret_cast<SessionsSharedData*>(userData);
+            CleanupAuthTokens(sessionsSharedData);
+            return false;
+        },
+        sessionsSharedData,
+        nullptr);
+    GMainContext* threadContext = g_main_context_get_thread_default();
+    g_source_attach(timeoutSource, threadContext ? threadContext : g_main_context_default());
+}
+
+void ClientDisconnected(WsClient& client)
+{
+    const unsigned reconnectTimeout =
+        g_random_int_range(MIN_RECONNECT_TIMEOUT, MAX_RECONNECT_TIMEOUT + 1);
+    Log()->info("Scheduling reconnect withing \"{}\" seconds...", reconnectTimeout);
+    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(reconnectTimeout));
+    GSource* timeoutSource = timeoutSourcePtr.get();
+    g_source_set_callback(
+        timeoutSource,
+        [] (gpointer userData) -> gboolean {
+            static_cast<WsClient*>(userData)->connect();
+            return false;
+        }, &client, nullptr);
+    g_source_attach(timeoutSource, g_main_context_get_thread_default());
+}
+
+#if defined(BUILD_AS_CAMERA_STREAMER) || defined(BUILD_AS_V4L2_RESTREAMER)
+
+typedef std::unique_ptr<GstStreamingSource> MountPoint;
+std::unique_ptr<WebRTCPeer> CreatePeer(
+    const Config* config,
+    const MountPoint& mountPoint,
+    const std::string& uri)
+{
+    return mountPoint ? mountPoint->createPeer() : nullptr;
+}
+
+struct ServerSessionFactory: public WsServer::SessionFactory
+{
+    ServerSessionFactory(
+        const Config* config,
+        SessionsSharedData* sharedData,
+        const MountPoint& mountPoint
+    ) : config(config), sharedData(sharedData), mountPoint(mountPoint) {}
+
+    std::unique_ptr<rtsp::Session> createSession(
+        std::optional<std::string>&& authCookie,
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept override
+    {
+        return std::make_unique<BasicServerSession>(
+            config,
+            sharedData,
+            authCookie,
+            [this] (const std::string& uri) {
+                return CreatePeer(config, mountPoint, uri);
+            },
+            sendRequest,
+            sendResponse);
+    }
+
+private:
+    const Config *const config;
+    SessionsSharedData *const sharedData;
+    const MountPoint& mountPoint;
+};
+
+struct ClientSessionFactory: public WsClient::SessionFactory
+{
+    ClientSessionFactory(
+        const Config* config,
+        SessionsSharedData* sharedData,
+        const MountPoint& mountPoint
+    ) : config(config), sharedData(sharedData), mountPoint(mountPoint) {}
+
+    std::unique_ptr<rtsp::Session> createSession(
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept override
+    {
+        return
+            std::make_unique<SignallingClientSession>(
+                config,
+                sharedData,
+                [this] (const std::string& uri) {
+                    return CreatePeer(config, mountPoint, uri);
+                },
+                sendRequest,
+                sendResponse);
+    };
+
+private:
+    const Config *const config;
+    SessionsSharedData *const sharedData;
+    const MountPoint& mountPoint;
+};
+
+#else
 
 enum class ListType {
     Public,
@@ -85,381 +216,9 @@ std::string GenerateList(const Config& config, ListType type) {
     return list;
 }
 
-void OnNewAuthToken(
-    Session::SharedData* sessionsSharedData,
-    const std::string& token,
-    std::chrono::steady_clock::time_point expiresAt)
-{
-    sessionsSharedData->authTokens.emplace(token, Session::AuthTokenData { expiresAt });
-}
-
-void CleanupAuthTokens(Session::SharedData* sessionsSharedData)
-{
-    const auto now = std::chrono::steady_clock::now();
-
-    auto& authTokens = sessionsSharedData->authTokens;
-    for(auto it = authTokens.begin(); it != authTokens.end();) {
-        if(it->second.expiresAt < now)
-            it = authTokens.erase(it);
-        else
-            ++it;
-    }
-}
-
-void ScheduleAuthTokensCleanup(Session::SharedData* sessionsSharedData) {
-    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(AuthTokenCleanupInterval));
-    GSource* timeoutSource = timeoutSourcePtr.get();
-    g_source_set_callback(
-        timeoutSource,
-        [] (gpointer userData) -> gboolean {
-            Session::SharedData* sessionsSharedData = reinterpret_cast<Session::SharedData*>(userData);
-            CleanupAuthTokens(sessionsSharedData);
-            return false;
-        },
-        sessionsSharedData,
-        nullptr);
-    GMainContext* threadContext = g_main_context_get_thread_default();
-    g_source_attach(timeoutSource, threadContext ? threadContext : g_main_context_default());
-}
-
-struct RecordingsMonitorContext {
-    RecordingsMonitorContext(const RecordConfig& config, GFilePtr&& dirPtr, GFileMonitorPtr&& monitor) :
-        config(config), dirPtr(std::move(dirPtr)), monitorPtr(std::move(monitor)) {}
-
-    const RecordConfig config;
-    GFilePtr dirPtr;
-    GFileMonitorPtr monitorPtr;
-};
-
-struct FilesMonitorsContext;
-
-struct FilesMonitorContext {
-    FilesMonitorContext(
-        const FilesMonitorsContext *const monitorsContext,
-        const std::string& streamer,
-        GFilePtr&& dirPtr,
-        GFileMonitorPtr&& monitor) :
-        monitorsContext(monitorsContext),
-        streamer(streamer),
-        dirPtr(std::move(dirPtr)),
-        monitorPtr(std::move(monitor)) {}
-
-    const FilesMonitorsContext *const monitorsContext;
-    const std::string streamer;
-    GFilePtr dirPtr;
-    GFileMonitorPtr monitorPtr;
-    std::map<std::string, uint64_t> files; // file name -> file timestamp
-};
-
-struct GDateTimeLess {
-    bool operator() (const GDateTimePtr& l, const GDateTimePtr& r) const {
-        return g_date_time_compare(l.get(), r.get()) < 0;
-    }
-};
-
-struct RecordingsCleanupContext {
-    std::deque<RecordingsMonitorContext> monitors;
-};
-
-struct FilesMonitorsContext {
-    FilesMonitorsContext(GMainContextPtr&& mainContextPtr, Session::SharedData* sharedData) :
-        mainContextPtr(std::move(mainContextPtr)), sharedData(sharedData) {}
-
-    const GMainContextPtr mainContextPtr;
-    Session::SharedData *const sharedData;
-    std::deque<FilesMonitorContext> monitors;
-};
-
-struct FileData {
-    GFilePtr filePtr;
-    guint64 fileSize;
-};
-
-void RecordingsDirChanged(
-    GFileMonitor* monitor,
-    GFile* /*file*/,
-    GFile* /*otherFile*/,
-    GFileMonitorEvent eventType,
-    gpointer userData)
-{
-    RecordingsMonitorContext& monitorContext = *static_cast<RecordingsMonitorContext*>(userData);
-
-    if(eventType != G_FILE_MONITOR_EVENT_CREATED && eventType != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
-        return;
-
-    std::map<GDateTimePtr, FileData, GDateTimeLess> candidatesToDelete;
-    guint64 dirSize = 0;
-
-    g_autoptr(GFileEnumerator) enumerator(
-        g_file_enumerate_children(
-            monitorContext.dirPtr.get(),
-            G_FILE_ATTRIBUTE_STANDARD_SIZE "," G_FILE_ATTRIBUTE_TIME_MODIFIED,
-            G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-            nullptr,
-            nullptr));
-
-    if(enumerator) {
-        GFileInfo* childInfo;
-        GFile* child;
-        for(
-            gboolean iterated = g_file_enumerator_iterate(enumerator, &childInfo, &child, nullptr, nullptr);
-            iterated && childInfo && child;
-            iterated = g_file_enumerator_iterate(enumerator, &childInfo, &child, nullptr, nullptr))
-        {
-            switch(g_file_info_get_file_type(childInfo)) {
-                case G_FILE_TYPE_REGULAR: {
-                    const guint64 fileSize = g_file_info_get_size(childInfo);
-                    dirSize += fileSize;
-
-                    if(g_autoptr(GDateTime) fileTime = g_file_info_get_modification_date_time(childInfo)) {
-                        if(candidatesToDelete.size() < MAX_FILES_TO_CLEANUP ||
-                            g_date_time_compare((--candidatesToDelete.end())->first.get(), fileTime) > 0)
-                        {
-                            candidatesToDelete.emplace(
-                                g_date_time_ref(fileTime),
-                                FileData {
-                                    GFilePtr(G_FILE(g_object_ref(child))),
-                                    fileSize });
-                        }
-                        if(candidatesToDelete.size() > MAX_FILES_TO_CLEANUP) {
-                            candidatesToDelete.erase(--candidatesToDelete.end());
-                        }
-                    }
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-    }
-
-    if(candidatesToDelete.empty())
-        return;
-
-    auto it = candidatesToDelete.begin();
-    while(it != candidatesToDelete.end() && dirSize > monitorContext.config.maxDirSize) {
-        dirSize -= it->second.fileSize;
-        g_file_delete(it->second.filePtr.get(), nullptr, nullptr);
-        ++it;
-    }
-}
-
-void RecordingsCleanupInitAction(
-    RecordingsCleanupContext& context,
-    const std::deque<RecordConfig>& cleanupList)
-{
-    for(const RecordConfig& config: cleanupList) {
-        GFilePtr monitorDirPtr(g_file_new_for_path(config.dir.c_str()));
-        GFileMonitorPtr dirMonitorPtr(
-            g_file_monitor_directory(
-                monitorDirPtr.get(),
-                G_FILE_MONITOR_NONE,
-                nullptr,
-                nullptr));
-        if(dirMonitorPtr) {
-            g_file_monitor_set_rate_limit(dirMonitorPtr.get(), 5000);
-            RecordingsMonitorContext& monitorContext =
-                context.monitors.emplace_back(
-                    config,
-                    std::move(monitorDirPtr),
-                    std::move(dirMonitorPtr));
-            g_signal_connect(
-                monitorContext.monitorPtr.get(),
-                "changed",
-                G_CALLBACK(RecordingsDirChanged),
-                &monitorContext);
-        }
-    }
-}
-
-void PostDirContent(
-    GMainContext* mainContext,
-    Session::SharedData* sharedData,
-    FilesMonitorContext* monitorContext)
-{
-    GSourcePtr idleSourcePtr(g_idle_source_new());
-    GSource* idleSource = idleSourcePtr.get();
-
-    struct CallbackData {
-        const std::string streamer;
-        Session::SharedData *const sharedData;
-        const std::string list;
-    };
-
-    std::string list;
-    for(const auto& pair: monitorContext->files) {
-        list += pair.first;
-        list += ": ";
-
-        GDateTimePtr timePtr(g_date_time_new_from_unix_utc(pair.second));
-        GCharPtr isoTime(timePtr ? g_date_time_format_iso8601(timePtr.get()) : nullptr);
-        if(isoTime) {
-            list += isoTime.get();
-        } else {
-            list += std::to_string(pair.second);
-        }
-
-        list += "\r\n";
-    }
-
-    CallbackData* callbackData = new CallbackData {
-        monitorContext->streamer,
-        sharedData,
-        std::move(list) };
-    g_source_set_callback(
-        idleSource,
-        [] (gpointer userData) -> gboolean {
-            const CallbackData* callbackData = reinterpret_cast<CallbackData*>(userData);
-
-            const std::string& streamer = callbackData->streamer;
-            const std::string& list = callbackData->list;
-
-            Log()->debug("Dir content changed for \"{}\"", streamer);
-            Log()->trace(list);
-
-            callbackData->sharedData->mountpointsListsCache[streamer] = list;
-
-            return false;
-        },
-        callbackData,
-        [] (gpointer userData) {
-            delete reinterpret_cast<CallbackData*>(userData);
-        });
-    g_source_attach(idleSource, mainContext);
-}
-
-void FilesDirChanged(
-    GFileMonitor* monitor,
-    GFile* file,
-    GFile* /*otherFile*/,
-    GFileMonitorEvent eventType,
-    gpointer userData)
-{
-    FilesMonitorContext& context = *static_cast<FilesMonitorContext*>(userData);
-    const FilesMonitorsContext& monitorsContext = *context.monitorsContext;
-
-    switch(eventType) {
-        case G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT: {
-            g_autofree gchar* fileName = g_file_get_basename(file);
-            g_autoptr(GFileInfo) fileInfo =
-                g_file_query_info(
-                    file,
-                    G_FILE_ATTRIBUTE_STANDARD_TYPE "," G_FILE_ATTRIBUTE_TIME_CREATED,
-                    G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                    NULL,
-                    NULL);
-            if(g_file_info_get_file_type(fileInfo) != G_FILE_TYPE_REGULAR)
-                break;
-
-            const std::string& escapedStreamerName = context.streamer;
-
-            g_autoptr(GDateTime) fileTime = g_file_info_get_creation_date_time(fileInfo);
-            if(fileName && fileTime) {
-                g_autofree gchar* escapedFileName(g_uri_escape_string(fileName, nullptr, false));
-                context.files.emplace(
-                    escapedStreamerName + rtsp::UriSeparator + escapedFileName,
-                    g_date_time_to_unix(fileTime));
-
-                // FIXME! protect from too frequent changes
-                PostDirContent(monitorsContext.mainContextPtr.get(), monitorsContext.sharedData, &context);
-            } else {
-                assert(false); // FIXME?
-            }
-            break;
-        }
-        case G_FILE_MONITOR_EVENT_DELETED: {
-            g_autofree gchar* fileName = g_file_get_basename(file);
-            if(fileName) {
-                const std::string& escapedStreamerName = context.streamer;
-                g_autofree gchar* escapedFileName(g_uri_escape_string(fileName, nullptr, false));
-
-                context.files.erase(escapedStreamerName + rtsp::UriSeparator + escapedFileName);
-
-                // FIXME! protect from too frequent changes
-                PostDirContent(monitorsContext.mainContextPtr.get(), monitorsContext.sharedData, &context);
-            } else {
-                assert(false); // FIXME?
-            }
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-void FilesMonitorsInitAction(
-    FilesMonitorsContext& context,
-    const std::deque<std::pair<std::string, std::string>>& monitorList)
-{
-    for(const std::pair<std::string, std::string>& pair: monitorList) {
-        const std::string& escapedStreamerName = pair.first;
-
-        GFilePtr monitorDirPtr(g_file_new_for_path(pair.second.c_str()));
-        GFileMonitorPtr dirMonitorPtr(
-            g_file_monitor_directory(
-                monitorDirPtr.get(),
-                G_FILE_MONITOR_NONE,
-                nullptr,
-                nullptr));
-        if(dirMonitorPtr) {
-            g_file_monitor_set_rate_limit(dirMonitorPtr.get(), 5000);
-            FilesMonitorContext& monitorContext =
-                context.monitors.emplace_back(
-                    &context,
-                    pair.first,
-                    GFilePtr(g_object_ref(monitorDirPtr.get())),
-                    std::move(dirMonitorPtr));
-            g_signal_connect(
-                monitorContext.monitorPtr.get(),
-                "changed",
-                G_CALLBACK(FilesDirChanged),
-                &monitorContext);
-
-            g_autoptr(GFileEnumerator) enumerator(
-                g_file_enumerate_children(
-                    monitorDirPtr.get(),
-                    G_FILE_ATTRIBUTE_TIME_CREATED,
-                    G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                    nullptr,
-                    nullptr));
-
-            if(enumerator) {
-                GFileInfo* childInfo;
-                GFile* child;
-                for(
-                    gboolean iterated = g_file_enumerator_iterate(enumerator, &childInfo, &child, nullptr, nullptr);
-                    iterated && childInfo && child;
-                    iterated = g_file_enumerator_iterate(enumerator, &childInfo, &child, nullptr, nullptr))
-                {
-                    switch(g_file_info_get_file_type(childInfo)) {
-                        case G_FILE_TYPE_REGULAR: {
-                            const char* fileName = g_file_info_get_name(childInfo);
-                            g_autoptr(GDateTime) fileTime = g_file_info_get_creation_date_time(childInfo);
-                            if(fileName && fileTime) {
-                                GCharPtr escapedFileNamePtr(g_uri_escape_string(fileName, nullptr, false));
-                                monitorContext.files.emplace(
-                                    escapedStreamerName + rtsp::UriSeparator + escapedFileNamePtr.get(),
-                                    g_date_time_to_unix(fileTime));
-                            }
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                }
-            }
-
-            PostDirContent(context.mainContextPtr.get(), context.sharedData, &monitorContext);
-        }
-    }
-}
-
-}
-
 typedef std::map<std::string, std::unique_ptr<GstStreamingSource>, std::less<>> MountPoints;
 
-static std::unique_ptr<WebRTCPeer>
-CreatePeer(
+std::unique_ptr<WebRTCPeer> CreatePeer(
     const Config* config,
     MountPoints* mountPoints,
     const std::string& uri)
@@ -500,8 +259,7 @@ CreatePeer(
     }
 }
 
-static std::unique_ptr<WebRTCPeer>
-CreateRecordPeer(
+std::unique_ptr<WebRTCPeer> CreateRecordPeer(
     const Config* config,
     MountPoints* mountPoints,
     const std::string& uri)
@@ -513,29 +271,11 @@ CreateRecordPeer(
         return nullptr;
 }
 
-namespace {
-
-void ClientDisconnected(WsClient& client)
-{
-    const unsigned reconnectTimeout =
-        g_random_int_range(MIN_RECONNECT_TIMEOUT, MAX_RECONNECT_TIMEOUT + 1);
-    Log()->info("Scheduling reconnect withing \"{}\" seconds...", reconnectTimeout);
-    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(reconnectTimeout));
-    GSource* timeoutSource = timeoutSourcePtr.get();
-    g_source_set_callback(
-        timeoutSource,
-        [] (gpointer userData) -> gboolean {
-            static_cast<WsClient*>(userData)->connect();
-            return false;
-        }, &client, nullptr);
-    g_source_attach(timeoutSource, g_main_context_get_thread_default());
-}
-
 struct ServerSessionFactory: public WsServer::SessionFactory
 {
     ServerSessionFactory(
         const Config* config,
-        Session::SharedData* sharedData,
+        SessionsSharedData* sharedData,
         MountPoints* mountPoints
     ) : config(config), sharedData(sharedData), mountPoints(mountPoints) {}
 
@@ -544,7 +284,7 @@ struct ServerSessionFactory: public WsServer::SessionFactory
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept override
     {
-        return std::make_unique<Session>(
+        return std::make_unique<ServerSession>(
             config,
             sharedData,
             authCookie,
@@ -560,7 +300,7 @@ struct ServerSessionFactory: public WsServer::SessionFactory
 
 private:
     const Config *const config;
-    Session::SharedData *const sharedData;
+    SessionsSharedData *const sharedData;
     MountPoints *const mountPoints;
 };
 
@@ -568,7 +308,7 @@ struct ClientSessionFactory: public WsClient::SessionFactory
 {
     ClientSessionFactory(
         const Config* config,
-        Session::SharedData* sharedData,
+        SessionsSharedData* sharedData,
         MountPoints* mountPoints
     ) : config(config), sharedData(sharedData), mountPoints(mountPoints) {}
 
@@ -589,17 +329,15 @@ struct ClientSessionFactory: public WsClient::SessionFactory
 
 private:
     const Config *const config;
-    Session::SharedData *const sharedData;
+    SessionsSharedData *const sharedData;
     MountPoints *const mountPoints;
 };
 
-}
-
-static void OnRecorderConnected(Session::SharedData* sharedData, const std::string& uri)
+void OnRecorderConnected(SessionsSharedData* sharedData, const std::string& uri)
 {
     Log()->info("Recorder connected to \"{}\" streamer", uri);
 
-    Session::RecordMountpointData& data = sharedData->recordMountpointsData[uri];
+    RecordMountpointData& data = sharedData->recordMountpointsData[uri];
 
     data.recording = true;
 
@@ -612,7 +350,7 @@ static void OnRecorderConnected(Session::SharedData* sharedData, const std::stri
     }
 }
 
-static void OnRecorderDisconnected(Session::SharedData* sharedData, const std::string& uri)
+void OnRecorderDisconnected(SessionsSharedData* sharedData, const std::string& uri)
 {
     Log()->info("Recorder disconnected from \"{}\" streamer", uri);
 
@@ -621,9 +359,12 @@ static void OnRecorderDisconnected(Session::SharedData* sharedData, const std::s
         return;
     }
 
-    Session::RecordMountpointData& data = it->second;
+    RecordMountpointData& data = it->second;
     data.recording = false;
     assert(data.subscriptions.empty());
+}
+#endif
+
 }
 
 int ReStreamerMain(
@@ -643,15 +384,41 @@ int ReStreamerMain(
     GMainLoopPtr loopPtr(g_main_loop_new(context, FALSE));
     GMainLoop* loop = loopPtr.get();
 
-    Session::SharedData sessionsSharedData {
+    SessionsSharedData sessionsSharedData {
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
         .publicListCache = GenerateList(config, ListType::Public),
         .protectedListCache = GenerateList(config, ListType::Protected),
         .agentListCache = GenerateList(config, ListType::Agent),
+#endif
     };
 
     std::deque<RecordConfig> cleanupList;
     std::deque<std::pair<std::string, std::string>> monitorList;
 
+#if defined(BUILD_AS_CAMERA_STREAMER) 
+    const std::optional<CameraConfig>& cameraConfig = config.cameraConfig;
+    std::optional<GstCameraStreamer::VideoResolution> resolution;
+    std::optional<unsigned> framerate;
+    if(cameraConfig) {
+        if(cameraConfig->resolution) {
+            resolution = GstCameraStreamer::VideoResolution {
+                cameraConfig->resolution->width,
+                cameraConfig->resolution->height };
+        }
+        framerate = cameraConfig->framerate;
+    }
+    MountPoint mountPoint = std::make_unique<GstCameraStreamer>(
+        resolution,
+        framerate,
+        std::optional<std::string>(),
+        config.useHwEncoder);
+#elif defined(BUILD_AS_V4L2_RESTREAMER)
+    MountPoint mountPoint = std::make_unique<GstV4L2ReStreamer>(
+            config.edidFilePath,
+            std::optional<GstV4L2ReStreamer::VideoResolution>(),
+            std::optional<std::string>(),
+            config.useHwEncoder);
+#else
     MountPoints mountPoints;
     for(const auto& pair: config.streamers) {
         if((pair.second.type != StreamerConfig::Type::Record || !pair.second.recordConfig) && !pair.second.restream)
@@ -703,40 +470,11 @@ int ReStreamerMain(
                 pair.first,
                 std::make_unique<GstPipelineStreamer2>(pair.second.pipeline));
             break;
-        case StreamerConfig::Type::Camera: {
-            const std::optional<CameraConfig>& cameraConfig = pair.second.cameraConfig;
-            std::optional<GstCameraStreamer::VideoResolution> resolution;
-            std::optional<unsigned> framerate;
-            if(cameraConfig) {
-                if(cameraConfig->resolution) {
-                    resolution = GstCameraStreamer::VideoResolution {
-                        cameraConfig->resolution->width,
-                        cameraConfig->resolution->height };
-                }
-                framerate = cameraConfig->framerate;
-            }
-            mountPoints.emplace(
-                pair.first,
-                std::make_unique<GstCameraStreamer>(
-                    resolution,
-                    framerate,
-                    std::optional<std::string>(),
-                    pair.second.useHwEncoder));
-            break;
-        }
-        case StreamerConfig::Type::V4L2:
-            mountPoints.emplace(
-                pair.first,
-                std::make_unique<GstV4L2ReStreamer>(
-                    pair.second.edidFilePath,
-                    std::optional<GstV4L2ReStreamer::VideoResolution>(),
-                    std::optional<std::string>(),
-                    pair.second.useHwEncoder));
-            break;
         default:
             break;
         }
     }
+#endif
 
     ScheduleAuthTokensCleanup(&sessionsSharedData);
 
@@ -762,7 +500,13 @@ int ReStreamerMain(
         }
     }
 
+#if defined(BUILD_AS_CAMERA_STREAMER) || defined(BUILD_AS_V4L2_RESTREAMER)
+    ServerSessionFactory serverSessionFactory(&config, &sessionsSharedData, mountPoint);
+    ClientSessionFactory clientSessionFactory(&config, &sessionsSharedData, mountPoint);
+#else
+    ServerSessionFactory serverSessionFactory(&config, &sessionsSharedData, &mountPoints);
     ClientSessionFactory clientSessionFactory(&config, &sessionsSharedData, &mountPoints);
+#endif
 
     std::unique_ptr<WsClient> signallingClient;
     if(config.useAgentMode()) {
@@ -772,8 +516,6 @@ int ReStreamerMain(
             &clientSessionFactory,
             std::bind(ClientDisconnected, std::placeholders::_1));
     }
-
-    ServerSessionFactory serverSessionFactory(&config, &sessionsSharedData, &mountPoints);
 
     std::unique_ptr<WsServer> serverPtr;
     if(config.useServerMode()) {
@@ -792,6 +534,7 @@ int ReStreamerMain(
                 context);
     }
 
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     std::unique_ptr<RecordingsCleanupContext> recordingsCleanupContext;
     std::unique_ptr<Actor> recordingsCleanupActor;
     if(!cleanupList.empty()) {
@@ -818,6 +561,7 @@ int ReStreamerMain(
                 std::ref(*filesMonitorsContext),
                 std::ref(monitorList)));
     }
+#endif
 
     if((!httpServerPtr || httpServerPtr->init()) &&
         (!serverPtr || serverPtr->init(loop, lwsContext)) &&

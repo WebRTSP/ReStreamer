@@ -42,24 +42,55 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(LIBCONFIG REQUIRED libconfig)
 pkg_search_module(LIBNICE REQUIRED nice)
 
-file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    *.cpp
-    *.h
-    *.conf.sample
+set(SOURCES
     README.md
     BUILD.md
-    *.sh
-    *.cmake)
+    enableTLS.sh
+    Log.h
+    Log.cpp
+    Config.h
+    main.cpp
+    ReStreamer.h
+    ReStreamer.cpp
+    SignallingClientSession.h
+    SignallingClientSession.cpp
+)
+
+if(CAMERA_STREAMER)
+    set(VARIANT_SOURCES
+        BasicServerSession.h
+        BasicServerSession.cpp
+        camera-streamer.conf.sample
+    )
+elseif(V4L2_RESTREAMER)
+    set(VARIANT_SOURCES
+        BasicServerSession.h
+        BasicServerSession.cpp
+        v4l2-restreamer.conf.sample
+    )
+else()
+    set(VARIANT_SOURCES
+        stun.h
+        stun.cpp
+        FileMonitor.h
+        FileMonitor.cpp
+        ServerSession.h
+        ServerSession.cpp
+        restreamer.conf.sample
+    )
+endif()
 
 file(GLOB_RECURSE SNAP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    snap/*)
+    snap/*
+)
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${SNAP})
+add_executable(${PROJECT_NAME} ${SOURCES} ${VARIANT_SOURCES} ${SNAP})
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/WebRTSP
     ${LIBCONFIG_INCLUDE_DIRS}
     ${SPDLOG_INCLUDE_DIRS}
-    ${LIBNICE_INCLUDE_DIRS})
+    ${LIBNICE_INCLUDE_DIRS}
+)
 target_link_libraries(${PROJECT_NAME}
     ${LIBCONFIG_LIBRARIES}
     ${SPDLOG_LDFLAGS}
@@ -67,7 +98,8 @@ target_link_libraries(${PROJECT_NAME}
     Http
     RtspParser
     Signalling
-    RtStreaming)
+    RtStreaming
+)
 if(CAMERA_STREAMER)
     set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "CameraStreamer")
 elseif(V4L2_RESTREAMER)

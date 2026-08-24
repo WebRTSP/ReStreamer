@@ -1,7 +1,6 @@
 #pragma once
 
-#include <map>
-#include <unordered_map>
+#include <memory>
 
 #include "RtspSession/StreamSession.h"
 #include "RtspSession/MessageForwardMixin.h"
@@ -10,21 +9,21 @@
 #include "SessionsSharedData.h"
 
 
-class Session : public rtsp::StreamSession, public rtsp::MessageForwardMixin
+class ServerSession : public rtsp::StreamSession, public rtsp::MessageForwardMixin
 {
 public:
     typedef ::SessionAuthTokenData AuthTokenData;
     typedef ::RecordMountpointData RecordMountpointData;
     typedef SessionsSharedData SharedData;
 
-    Session(
+    ServerSession(
         const Config*,
         SharedData*,
         const std::optional<std::string>& authCookie,
         const CreatePeer& createPeer,
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept;
-    Session(
+    ServerSession(
         const Config*,
         SharedData*,
         const std::optional<std::string>& authCookie,
@@ -32,7 +31,7 @@ public:
         const CreatePeer& createRecordPeer,
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept;
-    ~Session();
+    ~ServerSession();
 
 protected:
     bool listEnabled(const std::string& uri) noexcept override;

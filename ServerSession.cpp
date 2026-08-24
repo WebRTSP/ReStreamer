@@ -1,4 +1,4 @@
-#include "Session.h"
+#include "ServerSession.h"
 
 #include <glib.h>
 
@@ -9,7 +9,7 @@
 #include "Log.h"
 
 
-Session::Session(
+ServerSession::ServerSession(
     const Config* config,
     SharedData* sharedData,
     const std::optional<std::string>& authCookie,
@@ -30,14 +30,14 @@ Session::Session(
 {
 }
 
-Session::Session(
+ServerSession::ServerSession(
     const Config* config,
     SharedData* sharedData,
     const std::optional<std::string>& authCookie,
     const CreatePeer& createPeer,
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
-    Session(
+    ServerSession(
         config,
         sharedData,
         authCookie,
@@ -48,7 +48,8 @@ Session::Session(
 {
 }
 
-Session::~Session() {
+ServerSession::~ServerSession()
+{
     for(auto& pair: _sharedData->recordMountpointsData) {
         RecordMountpointData& data = pair.second;
         data.subscriptions.erase(this);
@@ -64,7 +65,7 @@ Session::~Session() {
     }
 }
 
-bool Session::playEnabled(const std::string& uri) noexcept
+bool ServerSession::playEnabled(const std::string& uri) noexcept
 {
     auto it = _config->streamers.find(uri);
     bool isSubstream = false;
@@ -96,7 +97,7 @@ bool Session::playEnabled(const std::string& uri) noexcept
     return true;
 }
 
-bool Session::recordEnabled(const std::string& uri) noexcept
+bool ServerSession::recordEnabled(const std::string& uri) noexcept
 {
     auto it = _config->streamers.find(uri);
     return
@@ -104,7 +105,7 @@ bool Session::recordEnabled(const std::string& uri) noexcept
         it->second.type == StreamerConfig::Type::Record;
 }
 
-bool Session::subscribeEnabled(const std::string& uri) noexcept
+bool ServerSession::subscribeEnabled(const std::string& uri) noexcept
 {
     auto it = _config->streamers.find(uri);
     return
@@ -112,7 +113,7 @@ bool Session::subscribeEnabled(const std::string& uri) noexcept
         it->second.type == StreamerConfig::Type::Record;
 }
 
-bool Session::authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool ServerSession::authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     auto it = _config->streamers.find(requestPtr->uri);
     if(it == _config->streamers.end()) {
@@ -140,7 +141,7 @@ bool Session::authorizeAgent(const std::unique_ptr<rtsp::Request>& requestPtr) n
     return authPair.second == it->second.remoteAgentToken;
 }
 
-bool Session::hasValidCookie() const noexcept
+bool ServerSession::hasValidCookie() const noexcept
 {
     if(!_authCookie.has_value() || _authCookie->empty())
         return false;
@@ -157,7 +158,7 @@ bool Session::hasValidCookie() const noexcept
     return true;
 }
 
-bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     auto authRequired = [this, &requestPtr] () {
         bool authRequired = true;
@@ -197,7 +198,7 @@ bool Session::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexce
     return StreamSession::authorize(requestPtr);
 }
 
-bool Session::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
+bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     const auto [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
     auto streamerIt = _config->streamers.find(streamerName);
@@ -225,7 +226,7 @@ bool Session::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcep
     return rtsp::StreamSession::handleRequest(std::move(requestPtr));
 }
 
-bool Session::handleResponse(
+bool ServerSession::handleResponse(
     const rtsp::Request& request,
     std::unique_ptr<rtsp::Response>&& responsePtr) noexcept
 {
@@ -235,8 +236,7 @@ bool Session::handleResponse(
     return StreamSession::handleResponse(request, std::move(responsePtr));
 }
 
-#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
-bool Session::onGetParameterRequest(
+bool ServerSession::onGetParameterRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     std::string contentType = requestPtr->contentType;
@@ -297,9 +297,8 @@ bool Session::onGetParameterRequest(
 
     return true;
 }
-#endif
 
-bool Session::listEnabled(const std::string& uri) noexcept
+bool ServerSession::listEnabled(const std::string& uri) noexcept
 {
     if(uri == rtsp::WildcardUri)
         return true;
@@ -318,7 +317,7 @@ bool Session::listEnabled(const std::string& uri) noexcept
     return false;
 }
 
-bool Session::onListRequest(
+bool ServerSession::onListRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     const std::string& uri = requestPtr->uri;
@@ -407,7 +406,7 @@ bool Session::onListRequest(
     return false;
 }
 
-bool Session::onSubscribeRequest(
+bool ServerSession::onSubscribeRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     auto it = _config->streamers.find(requestPtr->uri);

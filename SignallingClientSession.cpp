@@ -25,17 +25,20 @@ SignallingClientSession::SignallingClientSession(
 
 bool SignallingClientSession::onConnected() noexcept
 {
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     const SignallingServer& target = _config->signallingServer.value();
     sendList(
         target.uri,
         _sharedData->agentListCache,
         target.token);
+#endif
 
     return true;
 }
 
 bool SignallingClientSession::playEnabled(const std::string& uri) noexcept
 {
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     auto it = _config->streamers.find(uri);
     if(it == _config->streamers.end())
         return false;
@@ -48,8 +51,6 @@ bool SignallingClientSession::playEnabled(const std::string& uri) noexcept
         case StreamerConfig::Type::ONVIFReStreamer:
 #endif
         case StreamerConfig::Type::Pipeline:
-        case StreamerConfig::Type::Camera:
-        case StreamerConfig::Type::V4L2:
             return streamerConfig.visibility == StreamerConfig::Visibility::Auto ||
                 streamerConfig.visibility == StreamerConfig::Visibility::Public;
         case StreamerConfig::Type::Record:
@@ -59,6 +60,9 @@ bool SignallingClientSession::playEnabled(const std::string& uri) noexcept
     }
 
     return false;
+#else
+    return StreamSession::playEnabled(uri);
+#endif
 }
 
 bool SignallingClientSession::onDescribeRequest(
