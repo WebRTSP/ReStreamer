@@ -1,0 +1,29 @@
+{
+	"version": 3,
+	"configurePresets": [
+		{
+			"name": "ReStreamer-debug",
+			"displayName": "ReStreamer (debug)",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug"
+			}
+		},
+		{
+			"name": "CameraStreamer",
+			"displayName": "Camera Streamer (debug)",
+			"cacheVariables": {
+				"CAMERA_STREAMER": "ON"
+			},
+			"inherits": ["ReStreamer-debug"]
+		},
+		{
+			"name": "V4L2Streamer",
+			"displayName": "V4L2 Streamer (debug)",
+			"cacheVariables": {
+				"V4L2_RESTREAMER": "ON"
+			},
+			"inherits": ["ReStreamer-debug"]
+		}
+	]
+}
