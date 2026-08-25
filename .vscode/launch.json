@@ -7,7 +7,7 @@
         "program": "${command:cmake.launchTargetPath}",
         "args": [],
         "stopAtEntry": false,
-        "cwd": "${fileDirname}",
+        "cwd": "${workspaceFolder}/www",
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",
