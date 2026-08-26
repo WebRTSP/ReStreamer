@@ -37,7 +37,7 @@
 #else
 #include "ServerSession.h"
 #endif
-#include "SignallingClientSession.h"
+#include "AgentClientSession.h"
 
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
 #include "FileMonitor.h"
@@ -162,7 +162,7 @@ struct ClientSessionFactory: public WsClient::SessionFactory
         const rtsp::Session::SendResponse& sendResponse) noexcept override
     {
         return
-            std::make_unique<SignallingClientSession>(
+            std::make_unique<AgentClientSession>(
                 config,
                 sharedData,
                 [this] (const std::string& uri) {
@@ -317,7 +317,7 @@ struct ClientSessionFactory: public WsClient::SessionFactory
         const rtsp::Session::SendResponse& sendResponse) noexcept override
     {
         return
-            std::make_unique<SignallingClientSession>(
+            std::make_unique<AgentClientSession>(
                 config,
                 sharedData,
                 [this] (const std::string& uri) {

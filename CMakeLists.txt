@@ -52,8 +52,8 @@ set(SOURCES
     main.cpp
     ReStreamer.h
     ReStreamer.cpp
-    SignallingClientSession.h
-    SignallingClientSession.cpp
+    AgentClientSession.h
+    AgentClientSession.cpp
 )
 
 if(CAMERA_STREAMER)

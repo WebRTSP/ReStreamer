@@ -1,4 +1,4 @@
-#include "SignallingClientSession.h"
+#include "AgentClientSession.h"
 
 #include <glib.h>
 
@@ -10,7 +10,7 @@
 #include "SessionsSharedData.h"
 
 
-SignallingClientSession::SignallingClientSession(
+AgentClientSession::AgentClientSession(
     const Config* config,
     const SharedData* sharedData,
     const CreatePeer& createPeer,
@@ -23,7 +23,7 @@ SignallingClientSession::SignallingClientSession(
 {
 }
 
-bool SignallingClientSession::onConnected() noexcept
+bool AgentClientSession::onConnected() noexcept
 {
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     const SignallingServer& target = _config->signallingServer.value();
@@ -36,7 +36,7 @@ bool SignallingClientSession::onConnected() noexcept
     return true;
 }
 
-bool SignallingClientSession::playEnabled(const std::string& uri) noexcept
+bool AgentClientSession::playEnabled(const std::string& uri) noexcept
 {
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     auto it = _config->streamers.find(uri);
@@ -65,7 +65,7 @@ bool SignallingClientSession::playEnabled(const std::string& uri) noexcept
 #endif
 }
 
-bool SignallingClientSession::onDescribeRequest(
+bool AgentClientSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     _pendingRequests.emplace_back(std::move(requestPtr));
@@ -82,7 +82,7 @@ bool SignallingClientSession::onDescribeRequest(
     return true;
 }
 
-bool SignallingClientSession::onGetParameterResponse(
+bool AgentClientSession::onGetParameterResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {

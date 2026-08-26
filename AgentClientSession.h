@@ -5,12 +5,12 @@ class Config; // #include "Config.h"
 class SessionsSharedData; // #include "SessionsSharedData.h"
 
 
-class SignallingClientSession : public rtsp::StreamSession
+class AgentClientSession : public rtsp::StreamSession
 {
 public:
     typedef SessionsSharedData SharedData;
 
-    SignallingClientSession(
+    AgentClientSession(
         const Config*,
         const SharedData*,
         const CreatePeer& createPeer,
