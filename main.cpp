@@ -21,6 +21,7 @@
 
 #include "RtspSession/Log.h"
 #include "Signalling/Log.h"
+#include "Signalling/Config.h"
 
 #include "Log.h"
 #include "ReStreamer.h"
@@ -188,32 +189,57 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
             }
         }
 
-        config_setting_t* signallingServerConfig = config_lookup(&config, "signalling-server");
-        if(signallingServerConfig && CONFIG_TRUE == config_setting_is_group(signallingServerConfig)) {
-            const char* host = nullptr;
-            const char* uri = nullptr;
-            config_setting_lookup_string(signallingServerConfig, "host", &host);
-            config_setting_lookup_string(signallingServerConfig, "uri", &uri);
-            if(host && uri) {
-                int port = 0;
-                int useTls = TRUE;
-                const char* token = nullptr;
-                int disableOwnServer = TRUE;
+        config_setting_t* signalingServerConfig = config_lookup(&config, "signaling-server");
+        if(!signalingServerConfig)
+            signalingServerConfig = config_lookup(&config, "signalling-server"); // for backward compatibility
+        if(signalingServerConfig) {
+            if(CONFIG_TRUE == config_setting_is_group(signalingServerConfig)) {
+                const char* host = nullptr;
+                const char* uri = nullptr;
+                config_setting_lookup_string(signalingServerConfig, "host", &host);
+                config_setting_lookup_string(signalingServerConfig, "uri", &uri);
+                if(host && uri) {
+                    int port = 0;
+                    int useTls = TRUE;
+                    const char* token = nullptr;
+                    int disableOwnServer = TRUE;
 
-                config_setting_lookup_int(signallingServerConfig, "port", &port);
-                config_setting_lookup_bool(signallingServerConfig, "tls", &useTls);
-                config_setting_lookup_string(signallingServerConfig, "token", &token);
-                config_setting_lookup_bool(signallingServerConfig, "disable-own-server", &disableOwnServer);
+                    config_setting_lookup_int(signalingServerConfig, "port", &port);
+                    config_setting_lookup_bool(signalingServerConfig, "tls", &useTls);
+                    config_setting_lookup_string(signalingServerConfig, "token", &token);
+                    config_setting_lookup_bool(signalingServerConfig, "disable-own-server", &disableOwnServer);
 
-                g_autofree gchar* escapedUri = g_uri_escape_string(uri, nullptr, false);
-                SignallingServer signallingServer(host, escapedUri, token, useTls);
+                    g_autofree gchar* escapedUri = g_uri_escape_string(uri, nullptr, false);
+                    SignallingServer signallingServer = {
+                        host,
+                        useTls ? WEBRTSP_DEFAULT_WSS_PORT : WEBRTSP_DEFAULT_WS_PORT,
+                        useTls != FALSE,
+                        escapedUri,
+                        token,
+                    };
 
-                if(port > 0)
-                    signallingServer.serverPort = port;
+                    if(port > 0)
+                        signallingServer.serverPort = port;
 
-                loadedConfig.signallingServer = signallingServer;
+                    loadedConfig.signallingServer = signallingServer;
 
-                loadedConfig.forceServerMode = disableOwnServer == FALSE;
+                    loadedConfig.forceServerMode = disableOwnServer == FALSE;
+                }
+            } else if(config_setting_type(signalingServerConfig) == CONFIG_TYPE_STRING) {
+                if(const char* signalingServerUrl = config_setting_get_string(signalingServerConfig)) {
+                    SignallingServer signallingServer;
+                    std::string path;
+                    if(WebRTSPUrlParse(
+                        signalingServerUrl,
+                        &signallingServer,
+                        &signallingServer,
+                        &path))
+                    {
+                        loadedConfig.signallingServer = std::move(signallingServer);
+                    } else {
+                        Log()->warn("Failed to parse \"{}\"", config_setting_name(signalingServerConfig));
+                    }
+                }
             }
         }
 

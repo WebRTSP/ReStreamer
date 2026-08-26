@@ -14,24 +14,9 @@
 #include "RtStreaming/WebRTCConfig.h"
 
 
-struct SignallingServer : public WsClientConfig
+struct SignallingServer : public WsClientConfig, public WsClientCredentials
 {
-    SignallingServer(
-        const std::string& server,
-        const std::string& uri,
-        const std::string& token,
-        bool useTls) :
-        WsClientConfig {
-            server,
-            useTls ? WEBRTSP_DEFAULT_WSS_PORT : WEBRTSP_DEFAULT_WS_PORT,
-            useTls },
-        uri(uri),
-        token(token)
-    {
-    }
-
     std::string uri;
-    std::string token;
 };
 
 struct CameraConfig

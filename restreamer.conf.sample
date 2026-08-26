@@ -7,16 +7,10 @@ http-port: 5080
 // to custom web client
 #www-root: "www"
 
-// if defined app will act as remote agent
-// but with "disable-own-server: false" will act as both remote agent and server
-#signalling-server: {
-#  host: "localhost"
-#  port: 5555
-#  tls: true
-#  uri: "proxy"
-#  token: "token"
-#  disable-own-server: true
-#}
+// if defined app will act as remote agent.
+// "webrtsp://" for plain WebSocket connection (ws://)
+// "webrtsps://" for Secure WebSocket connection (wss://)
+#signaling-server: "webrtsps://agent_id:access_token@signaling.webrtsp.org/streamer"
 
 streamers: (
   {

@@ -10,14 +10,10 @@ http-port: 5080
 // it should be false on Raspberry Pi 5 (or any other device without hardware h264 enconding support)
 #use-hw-encoder: true
 
-// if defined app will act as remote agent
-#signalling-server: {
-#  host: "localhost"
-#  port: 5555
-#  tls: true
-#  uri: "proxy"
-#  token: "token"
-#}
+// if defined app will act as remote agent.
+// "webrtsp://" for plain WebSocket connection (ws://)
+// "webrtsps://" for Secure WebSocket connection (wss://)
+#signaling-server: "webrtsps://agent_id:access_token@signaling.webrtsp.org/streamer"
 
 #realm = "V4L2ReStreamer"
 
