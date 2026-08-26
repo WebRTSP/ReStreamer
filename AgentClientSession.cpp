@@ -25,16 +25,13 @@ AgentClientSession::AgentClientSession(
 {
 }
 
-bool AgentClientSession::onConnected() noexcept
+bool AgentClientSession::listEnabled(const std::string& uri) noexcept
 {
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
-    const SignallingServer& target = _config->signallingServer.value();
-    sendList(
-        !target.uri.empty() ? target.uri : _agentId,
-        _sharedData->agentListCache);
+    return uri == rtsp::WildcardUri;
+#else
+    return false;
 #endif
-
-    return true;
 }
 
 bool AgentClientSession::playEnabled(const std::string& uri) noexcept
@@ -64,6 +61,22 @@ bool AgentClientSession::playEnabled(const std::string& uri) noexcept
 #else
     return StreamSession::playEnabled(uri);
 #endif
+}
+
+bool AgentClientSession::onListRequest(
+    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
+{
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
+    if(requestPtr->uri == rtsp::WildcardUri) {
+        sendOkResponse(
+            requestPtr->cseq,
+            rtsp::TextParametersContentType,
+            std::string(_sharedData->agentListCache));
+        return true;
+    }
+#endif
+
+    return false;
 }
 
 bool AgentClientSession::onDescribeRequest(

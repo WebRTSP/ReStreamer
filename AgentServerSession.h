@@ -21,8 +21,6 @@ public:
     ~AgentServerSession() noexcept;
 
 protected:
-    bool onListRequest(
-        std::unique_ptr<rtsp::Request>&&) noexcept override;
     bool onGetParameterRequest(std::unique_ptr<rtsp::Request>&&) noexcept;
     bool handleRequest(std::unique_ptr<rtsp::Request>&&) noexcept override;
 

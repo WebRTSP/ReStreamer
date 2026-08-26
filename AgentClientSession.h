@@ -18,13 +18,13 @@ public:
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
 
-    bool onConnected() noexcept override;
-
 protected:
     const WebRTCConfigPtr& webRTCConfig() const override { return _webRTCConfig; }
 
+    bool listEnabled(const std::string& /*uri*/) noexcept override;
     bool playEnabled(const std::string& /*uri*/) noexcept override;
 
+    bool onListRequest(std::unique_ptr<rtsp::Request>&&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&&) noexcept override;
 
     bool onGetParameterResponse(

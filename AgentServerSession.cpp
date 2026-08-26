@@ -37,46 +37,9 @@ bool AgentServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestP
     switch(requestPtr->method) {
     case rtsp::Method::GET_PARAMETER:
         return onGetParameterRequest(std::move(requestPtr));
-    case rtsp::Method::LIST:
-        return onListRequest(std::move(requestPtr));
     default:
         return forwardMediaSessionRequest(std::move(requestPtr));
     }
-}
-
-bool AgentServerSession::onListRequest(
-    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
-{
-    const std::string& uri = requestPtr->uri;
-    std::string contentType = requestPtr->contentType;
-
-    auto streamerIt = _config->streamers.find(uri);
-    if(streamerIt == _config->streamers.end())
-        return false;
-
-    if(streamerIt->second.type != StreamerConfig::Type::Proxy)
-        return false;
-
-    if(contentType != rtsp::TextParametersContentType)
-        return false;
-
-    rtsp::Parameters inList;
-    if(rtsp::ParseParameters(requestPtr->body, &inList)) {
-        std::string list;
-        for(auto& name2desc: inList) {
-            list += uri;
-            list += rtsp::UriSeparator;
-            list += name2desc.first;
-            list += ": ";
-            list += name2desc.second;
-            list += "\r\n";
-        }
-        _sharedData->mountpointsListsCache[uri] = list;
-        sendOkResponse(requestPtr->cseq);
-        return true;
-    }
-
-    return false;
 }
 
 bool AgentServerSession::onGetParameterRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept

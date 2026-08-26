@@ -115,7 +115,6 @@ bool ServerSession::authorizeAgent(const std::unique_ptr<rtsp::Request>& request
 
     switch(it->second.type) {
     case StreamerConfig::Type::Record:
-    case StreamerConfig::Type::Proxy:
         break;
     default:
         return false;
@@ -200,19 +199,17 @@ bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) n
         if(!requestPtr->session.empty())
             return forwardMediaSessionRequest(std::move(requestPtr));
 
-        if(requestPtr->method == rtsp::Method::DESCRIBE) {
-            auto agentSessionIt = _sharedData->agentsSessions.find(streamerName);
-            if(agentSessionIt != _sharedData->agentsSessions.end()) {
-                return forwardRequest(
-                    std::move(requestPtr),
-                    std::string(!substreamName.empty() ? substreamName : rtsp::WildcardUri),
-                    agentSessionIt->second);
-            }
-
-            sendBadGatewayResponse(requestPtr->cseq);
-
-            return true;
+        auto agentSessionIt = _sharedData->agentsSessions.find(streamerName);
+        if(agentSessionIt != _sharedData->agentsSessions.end()) {
+            return forwardRequest(
+                std::move(requestPtr),
+                std::string(!substreamName.empty() ? substreamName : rtsp::WildcardUri),
+                agentSessionIt->second);
         }
+
+        sendBadGatewayResponse(requestPtr->cseq);
+
+        return true;
     }
 
     return rtsp::StreamSession::handleRequest(std::move(requestPtr));
@@ -299,14 +296,7 @@ bool ServerSession::listEnabled(const std::string& uri) noexcept
     if(streamerIt == _config->streamers.end())
         return false;
 
-    if(
-        streamerIt->second.type == StreamerConfig::Type::FilePlayer ||
-        streamerIt->second.type == StreamerConfig::Type::Proxy)
-    {
-        return true;
-    }
-
-    return false;
+    return streamerIt->second.type == StreamerConfig::Type::FilePlayer;
 }
 
 bool ServerSession::onListRequest(
@@ -353,9 +343,6 @@ bool ServerSession::onListRequest(
 
     switch(streamerIt->second.type) {
     case StreamerConfig::Type::FilePlayer:
-        sendCachedListResponse();
-        return true;
-    case StreamerConfig::Type::Proxy:
         sendCachedListResponse();
         return true;
     default:
