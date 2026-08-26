@@ -381,6 +381,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                 }
 
                 g_autofree gchar* escapedName = g_uri_escape_string(name, nullptr, false);
+                g_autofree gchar* escapedAgentToken = g_uri_escape_string(agentToken, nullptr, false);
                 loadedConfig.streamers.emplace(
                     escapedName,
                     StreamerConfig {
@@ -395,7 +396,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
                         password ?
                             std::make_optional<std::string>(password) :
                             std::optional<std::string>(),
-                        agentToken,
+                        escapedAgentToken,
                         description ?
                             std::string(description) :
                             std::string(),
