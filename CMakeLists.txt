@@ -78,6 +78,8 @@ else()
         FileMonitor.cpp
         ServerSession.h
         ServerSession.cpp
+        AgentServerSession.h
+        AgentServerSession.cpp
         restreamer.conf.sample
     )
 endif()

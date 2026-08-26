@@ -560,6 +560,35 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     return success;
 }
 
+static bool LoadClientId(Config* config)
+{
+    const std::deque<std::string> configDirs = ConfigDirs();
+    if(configDirs.empty())
+        return false;
+
+    const std::string clientIdPath = *configDirs.rbegin() + G_DIR_SEPARATOR_S + "id";
+
+    g_autofree gchar* clientId = nullptr;
+
+    if(g_file_get_contents(clientIdPath.c_str(), &clientId, nullptr, nullptr) &&
+        g_uuid_string_is_valid(clientId))
+    {
+        config->clientId = clientId;
+        return true;
+    }
+
+    clientId = g_uuid_string_random();
+
+    if(!g_file_set_contents(clientIdPath.c_str(), clientId, -1, nullptr)) {
+        Log()->error("Failed to save clientId to \"{}\"", clientIdPath);
+        return false;
+    }
+
+    config->clientId = clientId;
+
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     http::Config httpConfig {};
@@ -581,6 +610,9 @@ int main(int argc, char *argv[])
     Config config {};
     config.bindToLoopbackOnly = false;
     if(!LoadConfig(&httpConfig, &config, basePath))
+        return -1;
+
+    if(config.useAgentMode() && !LoadClientId(&config))
         return -1;
 
 #if defined(SNAPCRAFT_BUILD) && defined(BUILD_AS_V4L2_RESTREAMER)

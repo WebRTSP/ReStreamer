@@ -36,6 +36,7 @@
 #include "BasicServerSession.h"
 #else
 #include "ServerSession.h"
+#include "AgentServerSession.h"
 #endif
 #include "AgentClientSession.h"
 
@@ -92,19 +93,33 @@ void ScheduleAuthTokensCleanup(SessionsSharedData* sessionsSharedData) {
     g_source_attach(timeoutSource, threadContext ? threadContext : g_main_context_default());
 }
 
-void ClientDisconnected(WsClient& client)
+void ClientDisconnected(const Config& config, WsClient& client)
 {
     const unsigned reconnectTimeout =
         g_random_int_range(MIN_RECONNECT_TIMEOUT, MAX_RECONNECT_TIMEOUT + 1);
     Log()->info("Scheduling reconnect withing \"{}\" seconds...", reconnectTimeout);
     GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(reconnectTimeout));
     GSource* timeoutSource = timeoutSourcePtr.get();
+    struct UserData {
+        const Config *const config;
+        WsClient *const client;
+    };
     g_source_set_callback(
         timeoutSource,
         [] (gpointer userData) -> gboolean {
-            static_cast<WsClient*>(userData)->connect();
+            auto [config, client] = *static_cast<UserData*>(userData);
+
+            if(config->clientId.has_value() && config->signallingServer.has_value()) {
+                client->connectAsAgent(
+                    config->clientId.value(),
+                    config->signallingServer->agentId,
+                    config->signallingServer->accessToken);
+            }
+
             return false;
-        }, &client, nullptr);
+        },
+        new UserData { .config = &config, .client = &client },
+        [] (gpointer userData) { delete static_cast<UserData*>(userData); } );
     g_source_attach(timeoutSource, g_main_context_get_thread_default());
 }
 
@@ -157,7 +172,10 @@ struct ClientSessionFactory: public WsClient::SessionFactory
         const MountPoint& mountPoint
     ) : config(config), sharedData(sharedData), mountPoint(mountPoint) {}
 
-    std::unique_ptr<rtsp::Session> createSession(
+    std::unique_ptr<rtsp::Session> createAgentSession(
+        const std::string& /*clientId*/,
+        std::string&& agentId,
+        std::string&& /*accessToken*/,
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept override
     {
@@ -165,6 +183,7 @@ struct ClientSessionFactory: public WsClient::SessionFactory
             std::make_unique<AgentClientSession>(
                 config,
                 sharedData,
+                std::move(agentId),
                 [this] (const std::string& uri) {
                     return CreatePeer(config, mountPoint, uri);
                 },
@@ -271,6 +290,39 @@ std::unique_ptr<WebRTCPeer> CreateRecordPeer(
         return nullptr;
 }
 
+struct AgentsDb: public WsServer::AgentsDb
+{
+    AgentsDb(const Config* config) : config(config) {}
+
+    std::optional<AgentCredentials>
+        registerAgent(const std::string& clientId) noexcept override
+        { return {}; }; // dynamic agents not supported
+
+    bool authenticateAgent(
+        const std::string& clientId,
+        const std::string& agentId,
+        const std::string& accessToken) noexcept override;
+
+private:
+    const Config *const config;
+};
+
+bool AgentsDb::authenticateAgent(
+    const std::string& clientId,
+    const std::string& agentId,
+    const std::string& accessToken) noexcept
+{
+    auto it = config->streamers.find(agentId);
+    if(it == config->streamers.end())
+        return false;
+
+    const StreamerConfig& streamerConfig = it->second;
+    if(streamerConfig.type != StreamerConfig::Type::Proxy)
+        return false;
+
+    return streamerConfig.remoteAgentToken == accessToken;
+}
+
 struct ServerSessionFactory: public WsServer::SessionFactory
 {
     ServerSessionFactory(
@@ -298,6 +350,20 @@ struct ServerSessionFactory: public WsServer::SessionFactory
             sendResponse);
     }
 
+    std::unique_ptr<rtsp::Session> createAgentSession(
+        std::string&& /*clientId*/,
+        std::string&& agentId,
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept override
+    {
+        return std::make_unique<AgentServerSession>(
+            config,
+            sharedData,
+            std::move(agentId),
+            sendRequest,
+            sendResponse);
+    }
+
 private:
     const Config *const config;
     SessionsSharedData *const sharedData;
@@ -312,7 +378,10 @@ struct ClientSessionFactory: public WsClient::SessionFactory
         MountPoints* mountPoints
     ) : config(config), sharedData(sharedData), mountPoints(mountPoints) {}
 
-    std::unique_ptr<rtsp::Session> createSession(
+    std::unique_ptr<rtsp::Session> createAgentSession(
+        const std::string& /*clientId*/,
+        std::string&& agentId,
+        std::string&& /*accessToken*/,
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept override
     {
@@ -320,6 +389,7 @@ struct ClientSessionFactory: public WsClient::SessionFactory
             std::make_unique<AgentClientSession>(
                 config,
                 sharedData,
+                std::move(agentId),
                 [this] (const std::string& uri) {
                     return CreatePeer(config, mountPoints, uri);
                 },
@@ -504,6 +574,7 @@ int ReStreamerMain(
     ServerSessionFactory serverSessionFactory(&config, &sessionsSharedData, mountPoint);
     ClientSessionFactory clientSessionFactory(&config, &sessionsSharedData, mountPoint);
 #else
+    AgentsDb agentsDb(&config);
     ServerSessionFactory serverSessionFactory(&config, &sessionsSharedData, &mountPoints);
     ClientSessionFactory clientSessionFactory(&config, &sessionsSharedData, &mountPoints);
 #endif
@@ -514,14 +585,23 @@ int ReStreamerMain(
         signallingClient = std::make_unique<WsClient>(
             *config.signallingServer,
             &clientSessionFactory,
-            std::bind(ClientDisconnected, std::placeholders::_1));
+            [&config] (WsClient& client, unsigned /*statusCode*/) {
+                ClientDisconnected(config, client);
+            });
     }
 
     std::unique_ptr<WsServer> serverPtr;
     if(config.useServerMode()) {
+#if defined(BUILD_AS_CAMERA_STREAMER) || defined(BUILD_AS_V4L2_RESTREAMER)
         serverPtr = std::make_unique<WsServer>(
             config,
             &serverSessionFactory);
+#else
+        serverPtr = std::make_unique<WsServer>(
+            config,
+            &serverSessionFactory,
+            &agentsDb);
+#endif
     }
 
     std::unique_ptr<http::MicroServer> httpServerPtr;
@@ -567,8 +647,12 @@ int ReStreamerMain(
         (!serverPtr || serverPtr->init(loop, lwsContext)) &&
         (!signallingClient || signallingClient->init(loop)))
     {
-        if(signallingClient)
-            signallingClient->connect();
+        if(signallingClient && config.clientId.has_value() && config.signallingServer.has_value()) {
+            signallingClient->connectAsAgent(
+                config.clientId.value(),
+                config.signallingServer->agentId,
+                config.signallingServer->accessToken);
+        }
 
         g_main_loop_run(loop);
     } else

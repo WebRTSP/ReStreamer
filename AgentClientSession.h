@@ -13,6 +13,7 @@ public:
     AgentClientSession(
         const Config*,
         const SharedData*,
+        std::string&& agentId,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
@@ -34,6 +35,7 @@ private:
     const Config *const _config;
     WebRTCConfigPtr _webRTCConfig;
     const SharedData *const _sharedData;
+    const std::string _agentId;
 
     std::optional<rtsp::CSeq> _iceServersRequest;
     std::deque<std::unique_ptr<rtsp::Request>> _pendingRequests;

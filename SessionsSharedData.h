@@ -16,7 +16,7 @@ struct RecordMountpointData {
     std::unordered_map<rtsp::StreamSession*, rtsp::MediaSessionId> subscriptions;
 };
 
-class ServerSession;
+class AgentServerSession;
 struct SessionsSharedData {
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     const std::string publicListCache;
@@ -29,6 +29,6 @@ struct SessionsSharedData {
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     std::map<std::string, RecordMountpointData, std::less<>> recordMountpointsData;
     std::map<std::string, std::string, std::less<>> mountpointsListsCache;
-    std::map<std::string, ServerSession*, std::less<>> agentsMountpoints;
+    std::map<std::string, AgentServerSession*, std::less<>> agentsSessions;
 #endif
 };

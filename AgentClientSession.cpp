@@ -13,13 +13,15 @@
 AgentClientSession::AgentClientSession(
     const Config* config,
     const SharedData* sharedData,
+    std::string&& agentId,
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     StreamSession(config->webRTCConfig, createPeer, {}, sendRequest, sendResponse),
     _config(config),
     _webRTCConfig(std::make_shared<WebRTCConfig>(*_config->webRTCConfig)),
-    _sharedData(sharedData)
+    _sharedData(sharedData),
+    _agentId(std::move(agentId))
 {
 }
 
@@ -28,9 +30,8 @@ bool AgentClientSession::onConnected() noexcept
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
     const SignallingServer& target = _config->signallingServer.value();
     sendList(
-        target.uri,
-        _sharedData->agentListCache,
-        target.token);
+        !target.uri.empty() ? target.uri : _agentId,
+        _sharedData->agentListCache);
 #endif
 
     return true;
@@ -74,10 +75,9 @@ bool AgentClientSession::onDescribeRequest(
 
     const SignallingServer& target = _config->signallingServer.value();
     _iceServersRequest = requestGetParameter(
-        target.uri,
+        !target.uri.empty() ? target.uri : _agentId,
         rtsp::TextParametersContentType,
-        "ice-servers\r\n",
-        target.token);
+        "ice-servers\r\n");
 
     return true;
 }

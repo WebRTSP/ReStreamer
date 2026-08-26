@@ -7,6 +7,7 @@
 #include "Helpers/TurnRestApi.h"
 
 #include "Log.h"
+#include "AgentServerSession.h"
 
 
 ServerSession::ServerSession(
@@ -53,15 +54,6 @@ ServerSession::~ServerSession()
     for(auto& pair: _sharedData->recordMountpointsData) {
         RecordMountpointData& data = pair.second;
         data.subscriptions.erase(this);
-    }
-
-    auto& agentsMountpoints = _sharedData->agentsMountpoints;
-    for(auto it = agentsMountpoints.begin(); it != agentsMountpoints.end();) {
-        if(it->second == this) {
-            it = agentsMountpoints.erase(it);
-        } else {
-            ++it;
-        }
     }
 }
 
@@ -209,8 +201,8 @@ bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) n
             return forwardMediaSessionRequest(std::move(requestPtr));
 
         if(requestPtr->method == rtsp::Method::DESCRIBE) {
-            auto agentSessionIt = _sharedData->agentsMountpoints.find(streamerName);
-            if(agentSessionIt != _sharedData->agentsMountpoints.end()) {
+            auto agentSessionIt = _sharedData->agentsSessions.find(streamerName);
+            if(agentSessionIt != _sharedData->agentsSessions.end()) {
                 return forwardRequest(
                     std::move(requestPtr),
                     std::string(!substreamName.empty() ? substreamName : rtsp::WildcardUri),
@@ -326,21 +318,17 @@ bool ServerSession::onListRequest(
     if(!listEnabled(uri))
         return false;
 
-    if(uri == rtsp::WildcardUri) {
-        if(!contentType.empty() || !requestPtr->body.empty()) {
-            return false;
-        } else if(hasValidCookie()) {
-            sendOkResponse(
-                requestPtr->cseq,
-                rtsp::TextParametersContentType,
-                std::string(_sharedData->protectedListCache));
-        } else {
-            sendOkResponse(
-                requestPtr->cseq,
-                rtsp::TextParametersContentType,
-                std::string(_sharedData->publicListCache));
-        }
+    if(!contentType.empty() || !requestPtr->body.empty())
+        return false;
 
+    if(uri == rtsp::WildcardUri) {
+        sendOkResponse(
+            requestPtr->cseq,
+            rtsp::TextParametersContentType,
+            std::string(
+                hasValidCookie() ?
+                    _sharedData->protectedListCache :
+                    _sharedData->publicListCache));
         return true;
     }
 
@@ -348,62 +336,31 @@ bool ServerSession::onListRequest(
     if(streamerIt == _config->streamers.end())
         return false;
 
-    if(streamerIt->second.type != StreamerConfig::Type::Proxy &&
-        (!contentType.empty() || !requestPtr->body.empty()))
-    {
-        return false;
-    }
-
-    auto sendCachedListResponse =
-        [this, &uri, cseq = requestPtr->cseq] () {
-            auto listIt = _sharedData->mountpointsListsCache.find(uri);
-            if(listIt == _sharedData->mountpointsListsCache.end()) {
-                sendOkResponse(
-                    cseq,
-                    rtsp::TextParametersContentType,
-                    "\r\n");
-            } else {
-                sendOkResponse(
-                    cseq,
-                    rtsp::TextParametersContentType,
-                    std::string(listIt->second));
-            }
-        };
+    auto sendCachedListResponse = [this, &uri, cseq = requestPtr->cseq] () {
+        auto listIt = _sharedData->mountpointsListsCache.find(uri);
+        if(listIt == _sharedData->mountpointsListsCache.end()) {
+            sendOkResponse(
+                cseq,
+                rtsp::TextParametersContentType,
+                "\r\n");
+        } else {
+            sendOkResponse(
+                cseq,
+                rtsp::TextParametersContentType,
+                std::string(listIt->second));
+        }
+    };
 
     switch(streamerIt->second.type) {
-        case StreamerConfig::Type::FilePlayer: {
-            sendCachedListResponse();
-            return true;
-        }
-        case StreamerConfig::Type::Proxy: {
-            if(contentType.empty()) {
-                sendCachedListResponse();
-                return true;
-            } else if(contentType == rtsp::TextParametersContentType) {
-                rtsp::Parameters inList;
-                if(rtsp::ParseParameters(requestPtr->body, &inList)) {
-                    std::string list;
-                    for(auto& name2desc: inList) {
-                        list += uri;
-                        list += rtsp::UriSeparator;
-                        list += name2desc.first;
-                        list += ": ";
-                        list += name2desc.second;
-                        list += "\r\n";
-                    }
-                    _sharedData->agentsMountpoints[uri] = this;
-                    _sharedData->mountpointsListsCache[uri] = list;
-                    sendOkResponse(requestPtr->cseq);
-                    return true;
-                }
-            }
-            break;
-        }
-        default:
-            break;
+    case StreamerConfig::Type::FilePlayer:
+        sendCachedListResponse();
+        return true;
+    case StreamerConfig::Type::Proxy:
+        sendCachedListResponse();
+        return true;
+    default:
+        return false;
     }
-
-    return false;
 }
 
 bool ServerSession::onSubscribeRequest(

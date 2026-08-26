@@ -127,6 +127,8 @@ struct Config : public WsServerConfig
 
     CoturnConfig coturnConfig;
 
+    std::optional<std::string> clientId;
+
     bool useAgentMode() const { return signallingServer.has_value(); }
     bool useServerMode() const { return !signallingServer.has_value() || forceServerMode; }
 };
