@@ -632,22 +632,16 @@ int main(int argc, char *argv[])
         return -1;
 
 #if defined(SNAPCRAFT_BUILD) && defined(BUILD_AS_V4L2_RESTREAMER)
-    if(snapPath && snapName && !config.streamers.empty()) {
-        StreamerConfig& streamerConfig = config.streamers.begin()->second;
-        if(streamerConfig.type == StreamerConfig::Type::V4L2 &&
-            !streamerConfig.edidFilePath.has_value())
-        {
-            GCharPtr edidFilePathPtr(
-                g_build_path(
-                    G_DIR_SEPARATOR_S,
-                    snapPath,
-                    "opt",
-                    snapName,
-                    "share",
-                    "default.edid",
-                    NULL));
-            streamerConfig.edidFilePath = std::string(edidFilePathPtr.get());
-        }
+    if(!config.edidFilePath.has_value()) {
+        GCharPtr edidFilePathPtr(g_build_path(
+            G_DIR_SEPARATOR_S,
+            snapPath,
+            "opt",
+            snapName,
+            "share",
+            "default.edid",
+            NULL));
+        config.edidFilePath = std::string(edidFilePathPtr.get());
     }
 #endif
 
