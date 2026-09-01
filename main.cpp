@@ -33,11 +33,14 @@
 static const auto Log = ReStreamerLog;
 
 #if BUILD_AS_CAMERA_STREAMER
-#define CONFIG_FILE "camera-streamer.conf"
+    #define APP_ID "org.webrtsp.camera-streamer"
+    #define CONFIG_FILE "camera-streamer.conf"
 #elif BUILD_AS_V4L2_RESTREAMER
-#define CONFIG_FILE "v4l2-restreamer.conf"
+    #define APP_ID "org.webrtsp.v4l2-restreamer"
+    #define CONFIG_FILE "v4l2-restreamer.conf"
 #else
-#define CONFIG_FILE "restreamer.conf"
+    #define APP_ID "org.webrtsp.restreamer"
+    #define CONFIG_FILE "restreamer.conf"
 #endif
 
 static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* basePath)
@@ -579,6 +582,9 @@ static bool LoadClientId(Config* config)
         return true;
     }
 
+    if(g_mkdir_with_parents(configDirs.rbegin()->c_str(), S_IRWXU | S_IRWXG) < 0)
+        return false;
+
     clientId = g_uuid_string_random();
 
     if(!g_file_set_contents(clientIdPath.c_str(), clientId, -1, nullptr)) {
@@ -593,6 +599,8 @@ static bool LoadClientId(Config* config)
 
 int main(int argc, char *argv[])
 {
+    g_set_prgname(APP_ID);
+
     umask(S_IWGRP | S_IRWXO); // rwxr-x---
 
     http::Config httpConfig {};
