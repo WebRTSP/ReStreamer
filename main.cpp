@@ -2,6 +2,8 @@
 #include <deque>
 #include <set>
 
+#include <sys/stat.h>
+
 #include <glib.h>
 
 #include <libwebsockets.h>
@@ -591,6 +593,8 @@ static bool LoadClientId(Config* config)
 
 int main(int argc, char *argv[])
 {
+    umask(S_IWGRP | S_IRWXO); // rwxr-x---
+
     http::Config httpConfig {};
     httpConfig.bindToLoopbackOnly = false;
 
