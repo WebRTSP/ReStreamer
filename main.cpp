@@ -628,7 +628,7 @@ int main(int argc, char *argv[])
     if(!LoadConfig(&httpConfig, &config, basePath))
         return -1;
 
-    if(config.useAgentMode() && !LoadClientId(&config))
+    if(!LoadClientId(&config))
         return -1;
 
 #if defined(SNAPCRAFT_BUILD) && defined(BUILD_AS_V4L2_RESTREAMER)
