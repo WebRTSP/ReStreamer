@@ -528,6 +528,7 @@ static bool LoadConfig(http::Config* httpConfig, Config* config, const gchar* ba
     }
 
     loadedConfig.authRequired = !loadedHttpConfig.passwd.empty();
+    loadedConfig.passwd = loadedHttpConfig.passwd;
 
     bool hasPublicStreamers = false;
 #if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)

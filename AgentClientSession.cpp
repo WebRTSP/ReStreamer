@@ -63,6 +63,38 @@ bool AgentClientSession::playEnabled(const std::string& uri) noexcept
 #endif
 }
 
+bool AgentClientSession::authorize(
+    const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(!_config->authRequired)
+        return true;
+
+#if !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
+    auto it = _config->streamers.find(requestPtr->uri);
+    if(it == _config->streamers.end())
+        return false;
+#else
+    if(requestPtr->uri != rtsp::WildcardUri)
+        return false;
+#endif
+
+    // TEARDOWN can be sent by signaling server itself and without auth token
+    if(requestPtr->method == rtsp::Method::TEARDOWN)
+        return true;
+
+    const auto& [authType, credentials] = rtsp::ParseAuthentication(*requestPtr);
+
+    if(authType != rtsp::Authentication::Basic) // FIXME? only Basic supported atm
+        return false;
+
+    for(const auto& [userName, password]: _config->passwd) {
+        if(credentials.userName == userName && credentials.accessToken == password)
+            return true;
+    }
+
+    return false;
+}
+
 bool AgentClientSession::onListRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {

@@ -123,13 +123,12 @@ bool ServerSession::authorizeAgent(const std::unique_ptr<rtsp::Request>& request
     if(it->second.remoteAgentToken.empty())
         return true;
 
-    const std::pair<rtsp::Authentication, std::string> authPair =
-        rtsp::ParseAuthentication(*requestPtr);
+    const auto& [authType, credentials] = rtsp::ParseAuthentication(*requestPtr);
 
-    if(authPair.first != rtsp::Authentication::Bearer) // FIXME? only Bearer supported atm
+    if(authType != rtsp::Authentication::Bearer) // FIXME? only Bearer supported atm
         return false;
 
-    return authPair.second == it->second.remoteAgentToken;
+    return credentials.accessToken == it->second.remoteAgentToken;
 }
 
 bool ServerSession::hasValidCookie() const noexcept

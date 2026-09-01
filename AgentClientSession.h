@@ -21,6 +21,8 @@ public:
 protected:
     const WebRTCConfigPtr& webRTCConfig() const override { return _webRTCConfig; }
 
+    bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
+
     bool listEnabled(const std::string& /*uri*/) noexcept override;
     bool playEnabled(const std::string& /*uri*/) noexcept override;
 

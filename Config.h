@@ -129,6 +129,8 @@ struct Config : public WsServerConfig
 
     std::optional<std::string> clientId;
 
+    std::map<std::string, std::string> passwd; // for agent mode
+
     bool useAgentMode() const { return signallingServer.has_value(); }
     bool useServerMode() const { return !signallingServer.has_value() || forceServerMode; }
 };
