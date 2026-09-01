@@ -29,6 +29,10 @@
 #include "ReStreamer.h"
 #include "stun.h"
 
+#if defined(SNAPCRAFT_BUILD) && !defined(BUILD_AS_CAMERA_STREAMER) && !defined(BUILD_AS_V4L2_RESTREAMER)
+#include "SnapCoturnHelpers.h"
+#endif
+
 
 static const auto Log = ReStreamerLog;
 
