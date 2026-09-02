@@ -181,7 +181,7 @@ bool StopCoturn(bool disable)
             sleep(delay);
         }
 
-        if(StopCoturn(disable))
+        if(TryStopCoturn(disable))
             return true;
     }
 
