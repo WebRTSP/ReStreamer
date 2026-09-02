@@ -70,12 +70,12 @@ bool AgentServerSession::onGetParameterRequest(std::unique_ptr<rtsp::Request>&& 
         parameters.emplace("stun-server",
             "stun://" + coturnEndpoint);
         parameters.emplace("turn-server",
-            GenerateIceServerUrl(
+            GenerateTURNServerUrl(
                 requestPtr->uri,
                 coturnConfig.passwordTTL,
                 coturnConfig.staticAuthSecret.value(),
-                "turn://",
-                coturnEndpoint));
+                coturnEndpoint,
+                false));
     }
 
     for(const std::string& iceServer: agentsConfig.iceServers) {
