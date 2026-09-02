@@ -108,6 +108,7 @@ parts:
     build-environment:
       - PKG_CONFIG_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/pkgconfig:${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pkgconfig:${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
       - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/opt/${SNAPCRAFT_PROJECT_NAME}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+    cmake-generator: Ninja
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_INSTALL_PREFIX=/opt/${SNAPCRAFT_PROJECT_NAME}
@@ -120,7 +121,7 @@ parts:
       - node/24/stable
     build-packages:
       - g++
-      - make
+      - ninja-build
       - libspdlog-dev
       - libconfig-dev
       - gsoap
