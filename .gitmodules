@@ -1,6 +1,6 @@
 [submodule "WebRTSP"]
 	path = WebRTSP
-	url = https://github.com/WebRTSP/Native.git
+	url = https://github.com/WebRTSP/WebRTSP.git
 [submodule "www"]
 	path = www
 	url = https://github.com/WebRTSP/www-ng.git
