@@ -72,8 +72,8 @@ parts:
       - libsrtp2-1
   coturn:
     plugin: autotools
-    source: https://github.com/WebRTSP/coturn.git
-    source-branch: stable
+    source: https://github.com/coturn/coturn.git
+    source-branch: 4.17.2
     build-environment:
       - TURN_NO_SYSTEMD: "yes"
       - TURN_NO_MYSQL: "yes"
