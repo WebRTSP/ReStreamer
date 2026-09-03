@@ -101,13 +101,11 @@ void FilesDirChanged(
             if(g_file_info_get_file_type(fileInfo) != G_FILE_TYPE_REGULAR)
                 break;
 
-            const std::string& escapedStreamerName = context.streamer;
-
             g_autoptr(GDateTime) fileTime = g_file_info_get_creation_date_time(fileInfo);
             if(fileName && fileTime) {
                 g_autofree gchar* escapedFileName(g_uri_escape_string(fileName, nullptr, false));
                 context.files.emplace(
-                    escapedStreamerName + rtsp::UriSeparator + escapedFileName,
+                    escapedFileName,
                     g_date_time_to_unix(fileTime));
 
                 // FIXME! protect from too frequent changes
@@ -120,10 +118,9 @@ void FilesDirChanged(
         case G_FILE_MONITOR_EVENT_DELETED: {
             g_autofree gchar* fileName = g_file_get_basename(file);
             if(fileName) {
-                const std::string& escapedStreamerName = context.streamer;
                 g_autofree gchar* escapedFileName(g_uri_escape_string(fileName, nullptr, false));
 
-                context.files.erase(escapedStreamerName + rtsp::UriSeparator + escapedFileName);
+                context.files.erase(escapedFileName);
 
                 // FIXME! protect from too frequent changes
                 PostDirContent(monitorsContext.mainContextPtr.get(), monitorsContext.sharedData, &context);
@@ -213,8 +210,6 @@ void FilesMonitorsInitAction(
     const std::deque<std::pair<std::string, std::string>>& monitorList)
 {
     for(const std::pair<std::string, std::string>& pair: monitorList) {
-        const std::string& escapedStreamerName = pair.first;
-
         GFilePtr monitorDirPtr(g_file_new_for_path(pair.second.c_str()));
         GFileMonitorPtr dirMonitorPtr(
             g_file_monitor_directory(
@@ -259,7 +254,7 @@ void FilesMonitorsInitAction(
                             if(fileName && fileTime) {
                                 GCharPtr escapedFileNamePtr(g_uri_escape_string(fileName, nullptr, false));
                                 monitorContext.files.emplace(
-                                    escapedStreamerName + rtsp::UriSeparator + escapedFileNamePtr.get(),
+                                    escapedFileNamePtr.get(),
                                     g_date_time_to_unix(fileTime));
                             }
                             break;
