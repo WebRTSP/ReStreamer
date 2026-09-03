@@ -579,25 +579,37 @@ static bool LoadClientId(Config* config)
     const std::string clientIdPath = *configDirs.rbegin() + G_DIR_SEPARATOR_S + "id";
 
     g_autofree gchar* clientId = nullptr;
+    if(g_file_get_contents(clientIdPath.c_str(), &clientId, nullptr, nullptr)) {
+        const std::string_view::size_type truncatePos =
+            std::string_view(clientId).find_last_not_of("\r\n");
+        if(truncatePos != std::string_view::npos)
+            clientId[truncatePos + 1] = '\0';
 
-    if(g_file_get_contents(clientIdPath.c_str(), &clientId, nullptr, nullptr) &&
-        g_uuid_string_is_valid(clientId))
-    {
-        config->clientId = clientId;
-        return true;
+        if(g_uuid_string_is_valid(clientId)) {
+            config->clientId = clientId;
+            return true;
+        }
     }
 
     if(g_mkdir_with_parents(configDirs.rbegin()->c_str(), S_IRWXU | S_IRWXG) < 0)
         return false;
 
-    clientId = g_uuid_string_random();
+    std::string newClientId = g_uuid_string_random();
+    newClientId += '\n';
 
-    if(!g_file_set_contents(clientIdPath.c_str(), clientId, -1, nullptr)) {
+    if(!g_file_set_contents(
+        clientIdPath.c_str(),
+        newClientId.data(),
+        newClientId.size(),
+        nullptr))
+    {
         Log()->error("Failed to save clientId to \"{}\"", clientIdPath);
         return false;
     }
 
-    config->clientId = clientId;
+    newClientId.resize(newClientId.size() - 1); // to remove '\n'
+    assert(g_uuid_string_is_valid(newClientId.c_str()));
+    config->clientId = std::move(newClientId);
 
     return true;
 }
