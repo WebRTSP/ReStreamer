@@ -11,6 +11,7 @@
 
 enum {
     MAX_MEDIA_SESSION_COUNT = 5,
+    MIN_ICE_SERVERS_REFRESH_INTERVAL = 60, // seconds
 };
 
 AgentClientSession::AgentClientSession(
@@ -122,15 +123,29 @@ bool AgentClientSession::onDescribeRequest(
         return true;
     }
 
-    _pendingRequests.emplace_back(std::move(requestPtr));
-    if(_iceServersRequest)
+    if(_iceServersRequest) {
+        _pendingRequests.emplace_back(std::move(requestPtr));
         return true;
+    }
 
-    const SignallingServer& target = _config->signallingServer.value();
-    _iceServersRequest = requestGetParameter(
-        !target.uri.empty() ? target.uri : _agentId,
-        rtsp::TextParametersContentType,
-        "ice-servers\r\n");
+    const auto now = std::chrono::steady_clock::now();
+    const bool iceServersOutdated =
+        iceServersTime + std::chrono::seconds(MIN_ICE_SERVERS_REFRESH_INTERVAL) < now;
+    if(iceServersOutdated) {
+        _pendingRequests.emplace_back(std::move(requestPtr));
+
+        const SignallingServer& target = _config->signallingServer.value();
+        _iceServersRequest = requestGetParameter(
+            !target.uri.empty() ? target.uri : _agentId,
+            rtsp::TextParametersContentType,
+            "ice-servers\r\n");
+
+        return true;
+    }
+
+    assert(_pendingRequests.empty());
+
+    StreamSession::onDescribeRequest(std::move(requestPtr));
 
     return true;
 }
@@ -169,6 +184,7 @@ bool AgentClientSession::onGetParameterResponse(
     if(!iceServers.empty())
         webRTCConfig->iceServers.swap(iceServers);
     _webRTCConfig = webRTCConfig;
+    iceServersTime = std::chrono::steady_clock::now();
 
     auto pendingRequests = std::move(_pendingRequests);
     for(auto& request: pendingRequests) {

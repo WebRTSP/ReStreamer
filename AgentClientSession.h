@@ -35,7 +35,10 @@ protected:
 
 private:
     const Config *const _config;
+
+    std::chrono::steady_clock::time_point iceServersTime;
     WebRTCConfigPtr _webRTCConfig;
+
     const SharedData *const _sharedData;
     const std::string _agentId;
 
