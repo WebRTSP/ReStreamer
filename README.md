@@ -1,12 +1,15 @@
-[![rtsp-to-webrtsp](https://snapcraft.io/rtsp-to-webrtsp/badge.svg)](https://snapcraft.io/rtsp-to-webrtsp)
-[![webrtsp-camera-streamer](https://snapcraft.io/webrtsp-camera-streamer/badge.svg)](https://snapcraft.io/webrtsp-camera-streamer)
-[![webrtsp-hdmi-restreamer](https://snapcraft.io/webrtsp-hdmi-restreamer/badge.svg)](https://snapcraft.io/webrtsp-hdmi-restreamer)
+[![rtsp-to-webrtsp](https://snapcraft.io/rtsp-to-webrtsp/badge.svg)](https://snapcraft.io/rtsp-to-webrtsp)<br>
+[![webrtsp-camera-streamer](https://snapcraft.io/webrtsp-camera-streamer/badge.svg)](https://snapcraft.io/webrtsp-camera-streamer)<br>
+[![webrtsp-hdmi-restreamer](https://snapcraft.io/webrtsp-hdmi-restreamer/badge.svg)](https://snapcraft.io/webrtsp-hdmi-restreamer)<br>
 
 # Media URLs ReStreamer
 
 Intended to help play RTSP streams from IP Cams (and some other URL types) in browsers.
 
-Online demo: http://ipcam.stream:5080
+## Online demos
+* [ipcam.stream](https://ipcam.stream)
+* [WebRTSP Camera](https://snapcraft.io/webrtsp-camera-streamer) as Agent via [WebRTSP Signaling Server](https://github.com/WebRTSP/SignalingServer): [signaling.webrtsp.org](https://signaling.webrtsp.org/view#~64vzy4n8r5g1ja8)
+* [WebRTSP HDMI ReStreamer](https://snapcraft.io/webrtsp-hdmi-restreamer) as Agent via [WebRTSP Signaling Server](https://github.com/WebRTSP/SignalingServer): [signaling.webrtsp.org](https://signaling.webrtsp.org/view#~64w3hrk82fcn2bg)
 
 ## How to install it as Snap package and try
 * Run: `sudo snap install rtsp-to-webrtsp --edge`;
@@ -42,7 +45,7 @@ webrtc: {
 agents: {
   use-coturn: false
 }
-```   
+```
 4. Configure port forwarding on your router for following ports:
   * TCP 5080
   * TCP 5554
