@@ -19,7 +19,7 @@ camera: {
 // if defined app will act as remote agent.
 // "webrtsp://" for plain WebSocket connection (ws://)
 // "webrtsps://" for Secure WebSocket connection (wss://)
-#signaling-server: "webrtsps://agent_id:access_token@signaling.webrtsp.org/streamer"
+#signaling-server: "webrtsps://agent_id:access_token@signaling.webrtsp.org"
 
 #realm = "CameraStreamer"
 
