@@ -109,9 +109,9 @@ void ClientDisconnected(const Config& config, WsClient& client)
         [] (gpointer userData) -> gboolean {
             auto [config, client] = *static_cast<UserData*>(userData);
 
-            if(config->clientId.has_value() && config->signallingServer.has_value()) {
+            if(config->signallingServer.has_value()) {
                 client->connectAsAgent(
-                    config->clientId.value(),
+                    config->clientId,
                     config->signallingServer->agentId,
                     config->signallingServer->accessToken);
             }
@@ -647,9 +647,9 @@ int ReStreamerMain(
         (!serverPtr || serverPtr->init(loop, lwsContext)) &&
         (!signallingClient || signallingClient->init(loop)))
     {
-        if(signallingClient && config.clientId.has_value() && config.signallingServer.has_value()) {
+        if(signallingClient && config.signallingServer.has_value()) {
             signallingClient->connectAsAgent(
-                config.clientId.value(),
+                config.clientId,
                 config.signallingServer->agentId,
                 config.signallingServer->accessToken);
         }

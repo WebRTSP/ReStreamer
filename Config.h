@@ -127,7 +127,7 @@ struct Config : public WsServerConfig
 
     CoturnConfig coturnConfig;
 
-    std::optional<std::string> clientId;
+    std::string clientId;
 
     std::map<std::string, std::string> passwd; // for agent mode
 

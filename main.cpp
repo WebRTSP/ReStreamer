@@ -644,6 +644,8 @@ int main(int argc, char *argv[])
     if(!LoadClientId(&config))
         return -1;
 
+    Log()->info("Client ID: {}", config.clientId);
+
 #if defined(SNAPCRAFT_BUILD) && defined(BUILD_AS_V4L2_RESTREAMER)
     if(!config.edidFilePath.has_value()) {
         GCharPtr edidFilePathPtr(g_build_path(
