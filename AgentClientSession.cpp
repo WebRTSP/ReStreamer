@@ -9,6 +9,9 @@
 #include "Config.h"
 #include "SessionsSharedData.h"
 
+enum {
+    MAX_MEDIA_SESSION_COUNT = 5,
+};
 
 AgentClientSession::AgentClientSession(
     const Config* config,
@@ -114,6 +117,11 @@ bool AgentClientSession::onListRequest(
 bool AgentClientSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
+    if(mediaSessionCount() + _pendingRequests.size() >= MAX_MEDIA_SESSION_COUNT) {
+        sendNotEnoughBandwidth(requestPtr->cseq);
+        return true;
+    }
+
     _pendingRequests.emplace_back(std::move(requestPtr));
     if(_iceServersRequest)
         return true;
