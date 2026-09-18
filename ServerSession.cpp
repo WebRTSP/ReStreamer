@@ -9,6 +9,9 @@
 #include "Log.h"
 #include "AgentServerSession.h"
 
+#define SESSION "[{}]" " "
+#define TAG "[ServerSession]" " "
+
 
 ServerSession::ServerSession(
     const Config* config,
@@ -195,6 +198,20 @@ bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) n
     if(streamerIt != _config->streamers.end() &&
         streamerIt->second.type == StreamerConfig::Type::Proxy)
     {
+        typedef StreamerConfig::Visibility Visibility;
+        const bool authRequired =
+            (streamerIt->second.visibility == Visibility::Protected ||
+                (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
+        if(authRequired && !hasValidCookie()) {
+            log()->error(
+                SESSION TAG "{} authorize failed for \"{}\"",
+                sessionLogId,
+                MethodName(requestPtr->method),
+                requestPtr->uri);
+            sendUnauthorizedResponse(requestPtr->cseq);
+            return true;
+        }
+
         if(!requestPtr->session.empty())
             return forwardMediaSessionRequest(std::move(requestPtr));
 
