@@ -193,39 +193,41 @@ bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) 
 
 bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
-    const auto [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
-    auto streamerIt = _config->streamers.find(streamerName);
-    if(streamerIt != _config->streamers.end() &&
-        streamerIt->second.type == StreamerConfig::Type::Proxy)
-    {
-        typedef StreamerConfig::Visibility Visibility;
-        const bool authRequired =
-            (streamerIt->second.visibility == Visibility::Protected ||
-                (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
-        if(authRequired && !hasValidCookie()) {
-            log()->error(
-                SESSION TAG "{} authorize failed for \"{}\"",
-                sessionLogId,
-                MethodName(requestPtr->method),
-                requestPtr->uri);
-            sendUnauthorizedResponse(requestPtr->cseq);
+    if(requestPtr->uri != rtsp::WildcardUri) {
+        const auto [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
+        auto streamerIt = _config->streamers.find(streamerName);
+        if(streamerIt != _config->streamers.end() &&
+            streamerIt->second.type == StreamerConfig::Type::Proxy)
+        {
+            typedef StreamerConfig::Visibility Visibility;
+            const bool authRequired =
+                (streamerIt->second.visibility == Visibility::Protected ||
+                    (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
+            if(authRequired && !hasValidCookie()) {
+                log()->error(
+                    SESSION TAG "{} authorize failed for \"{}\"",
+                    sessionLogId,
+                    MethodName(requestPtr->method),
+                    requestPtr->uri);
+                sendUnauthorizedResponse(requestPtr->cseq);
+                return true;
+            }
+
+            if(!requestPtr->session.empty())
+                return forwardMediaSessionRequest(std::move(requestPtr));
+
+            auto agentSessionIt = _sharedData->agentsSessions.find(streamerName);
+            if(agentSessionIt != _sharedData->agentsSessions.end()) {
+                return forwardRequest(
+                    std::move(requestPtr),
+                    std::string(!substreamName.empty() ? substreamName : rtsp::WildcardUri),
+                    agentSessionIt->second);
+            }
+
+            sendBadGatewayResponse(requestPtr->cseq);
+
             return true;
         }
-
-        if(!requestPtr->session.empty())
-            return forwardMediaSessionRequest(std::move(requestPtr));
-
-        auto agentSessionIt = _sharedData->agentsSessions.find(streamerName);
-        if(agentSessionIt != _sharedData->agentsSessions.end()) {
-            return forwardRequest(
-                std::move(requestPtr),
-                std::string(!substreamName.empty() ? substreamName : rtsp::WildcardUri),
-                agentSessionIt->second);
-        }
-
-        sendBadGatewayResponse(requestPtr->cseq);
-
-        return true;
     }
 
     return rtsp::StreamSession::handleRequest(std::move(requestPtr));
