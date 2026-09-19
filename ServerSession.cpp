@@ -153,22 +153,18 @@ bool ServerSession::hasValidCookie() const noexcept
 
 bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
+    if(requestPtr->uri == rtsp::WildcardUri) {
+        assert(requestPtr->method == rtsp::Method::OPTIONS || requestPtr->method == rtsp::Method::LIST);
+        return true;
+    }
+
     auto authRequired = [this, &requestPtr] () {
-        bool authRequired = true;
-
-        if(requestPtr->uri == rtsp::WildcardUri) {
-            authRequired = requestPtr->method != rtsp::Method::LIST && _config->authRequired;
-        } else {
-            const auto& [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
-            auto streamerIt = _config->streamers.find(streamerName);
-            typedef StreamerConfig::Visibility Visibility;
-            authRequired =
-                streamerIt != _config->streamers.end() &&
-                (streamerIt->second.visibility == Visibility::Protected ||
-                    (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
-        }
-
-        return authRequired;
+        const auto& [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
+        auto streamerIt = _config->streamers.find(streamerName);
+        typedef StreamerConfig::Visibility Visibility;
+        return streamerIt != _config->streamers.end() &&
+            (streamerIt->second.visibility == Visibility::Protected ||
+                (_config->authRequired && streamerIt->second.visibility == Visibility::Auto));
     };
 
     switch(requestPtr->method) {
@@ -193,6 +189,23 @@ bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) 
 
 bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
+    if(requestPtr->uri == rtsp::WildcardUri) {
+        switch(requestPtr->method) {
+            case rtsp::Method::OPTIONS:
+            case rtsp::Method::LIST:
+                break; // only above Methods are allowed for root (wildcard)
+            case rtsp::Method::DESCRIBE:
+            case rtsp::Method::SETUP:
+            case rtsp::Method::PLAY:
+            case rtsp::Method::SUBSCRIBE:
+            case rtsp::Method::RECORD:
+            case rtsp::Method::TEARDOWN:
+            case rtsp::Method::GET_PARAMETER:
+            case rtsp::Method::SET_PARAMETER:
+                return false;
+        }
+    }
+
     if(requestPtr->uri != rtsp::WildcardUri) {
         const auto [streamerName, substreamName] = rtsp::SplitUri(requestPtr->uri);
         auto streamerIt = _config->streamers.find(streamerName);
