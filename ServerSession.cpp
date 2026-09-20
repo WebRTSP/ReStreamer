@@ -201,8 +201,10 @@ bool ServerSession::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) n
             case rtsp::Method::RECORD:
             case rtsp::Method::TEARDOWN:
             case rtsp::Method::GET_PARAMETER:
-            case rtsp::Method::SET_PARAMETER:
-                return false;
+            case rtsp::Method::SET_PARAMETER: {
+                sendMethodNotAllowedResponse(requestPtr->cseq);
+                return true;
+            }
         }
     }
 
